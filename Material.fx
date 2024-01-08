@@ -96,6 +96,7 @@
 // 9 = INVDESTCOLOR;
 // 10 = SRCALPHASAT;
 // - - - - - - - - - - -
+#define Blend_operation 0
 #define ZBias 0
 #define No_fog 0
 
