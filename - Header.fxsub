@@ -1,0 +1,162 @@
+
+
+float4x4 State_Matrix_Program_7 : WORLD;
+
+#define cmp
+
+float4   Camera_Position    : POSITION  < string Object = "Camera"; >;
+float4   Camera_Direction  : DIRECTION  < string Object = "Camera"; >;
+float4   Light_Direction  : DIRECTION  < string Object = "Light"; >;
+
+
+//float4x4 g_self_shadow_receivers : WORLDVIEWPROJECTION < string Object = "Light"; >;
+
+float2 ViewportSize : VIEWPORTPIXELSIZE;
+static const float2 ViewportOffset = float2(0.5,0.5)/ViewportSize;
+
+#define Controller "Directional_Light.pmx"
+#define LightDir "Directional Light" //Choose the bone used to control the IBL
+float4x4 PrivateLightDir : CONTROLOBJECT < string name = Controller; string item = LightDir ; >;
+static float3 _FixedIBL = PrivateLightDir._31_32_33;
+
+
+// 座法変換行列
+
+float4x4 LightWorldViewProjMatrix : WORLDVIEWPROJECTION < string Object = "Light"; >;
+
+float4x4 g_transforms : WORLDVIEWPROJECTION;
+float4x4 g_worlds     : WORLD;
+float4x4 g_worlds_invtrans : WORLDINVERSETRANSPOSE;
+float4x4 g_worldview        : WORLDVIEW;
+float4x4 g_worldview_inverse : WORLDVIEWINVERSE;
+float4x4 g_joint : MODEL;
+float4x4 g_joint_inverse : MODELINVERSE;
+    //mat2x4 g_texcoord_transforms[2];
+
+float3   LightDirection    : DIRECTION < string Object = "Light"; >;
+float3   CameraPosition    : POSITION  < string Object = "Camera"; >;
+
+// マテリアル色
+float4   MaterialDiffuse   : DIFFUSE  < string Object = "Geometry"; >;
+float4   MaterialAmbient   : AMBIENT  < string Object = "Geometry"; >;
+float4   MaterialEmmisive  : EMISSIVE < string Object = "Geometry"; >;
+float4   MaterialSpecular  : SPECULAR < string Object = "Geometry"; >;
+float    SpecularPower     : SPECULARPOWER < string Object = "Geometry"; >;
+float4   MaterialToon      : TOONCOLOR;
+// ライト色
+float4   LightDiffuse      : DIFFUSE   < string Object = "Light"; >;
+float4   LightAmbient      : AMBIENT   < string Object = "Light"; >;
+float4   LightSpecular     : SPECULAR  < string Object = "Light"; >;
+static float4 DiffuseColor  = MaterialDiffuse  * float4(LightDiffuse);
+static float4 AmbientColor  = MaterialAmbient  * LightAmbient + MaterialEmmisive;
+static float4 SpecularColor = MaterialSpecular * LightSpecular;
+
+float Tr : CONTROLOBJECT <string name="(Adjuster.pmd)"; string item="合成弱め";>;
+float BrightPlus : CONTROLOBJECT <string name="(self)"; string item="isekai";>;
+
+bool use_texture;  //テクスチャの有無
+bool use_toon;     //トゥーンの有無
+
+bool     parthf;   // パースペクティブフラグ
+bool     transp;   // 半透明フラグ
+#define SKII1    1500
+#define SKII2    8000
+#define Toon     3
+
+
+//==============================//
+//           IBL(s) : 
+//=============================//
+#define _IBL "IBL(s)/IBL.dds"   // Diffuse
+#define _IBL1 "IBL(s)/1_.dds"   // Specular
+#define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
+#define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
+#define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
+
+#define ENV_MAP Environment
+#define NORMAL Normal
+#define SPECULAR SpecularMap
+#define TRANSPARENCY Transparency
+#define TRANSLUCENCY Translucency
+
+#define ALPHA_TEST_DEF 1
+#define SELF_SHADOW 0
+#define TONE_CURVE 0
+#define SPECULAR_IBL_2 0
+#define SPECULAR_IBL_1 1
+#define SHADOW 1
+#define BONE_MAT_DEF 0
+
+static float4 g_light_env_chara_diffuse = LightAmbient;
+static float4 g_light_env_chara_ambient = LightDiffuse;
+static float4 g_light_env_chara_specular = LightSpecular;
+
+static float4 g_view_position = float4(CameraPosition.xyz, 0.00);
+static float4 g_light_chara_dir = float4(_FixedIBL.xyz, 0.00);
+
+float4 g_material_state_diffuse = Diffuse;
+float4 g_material_state_ambient = Ambient;
+float4 g_material_state_emission = Emission;
+
+#if SHADER_TYPE == 4 // eyes
+float4 g_material_state_shininess = float4(10.0f, 0.00, 0.00, 0.00);
+#else
+float4 g_material_state_shininess = float4(max((Shininess - 16.0f)*(1.0f/112.0f), 0.0f), 0.00, 0.00, 0.00);
+#endif
+float4 g_material_state_specular = Specular;
+
+#if Fresnel > 8
+    static float fresnel_i = 9.0f;
+#else
+    static float fresnel_i = 7.0f;
+#endif
+
+#if Phong_Shading == 1
+static float line_light_f = (float)Line_light * (float)(1.0 / 9.0);
+#else
+static float line_light_f = 0.0f;
+#endif
+static float fresnel_f = (fresnel_i - 1.0f) * 0.12f * 0.82f;
+
+static float4 g_fresnel_coefficients = float4(fresnel_f, 0.18f, line_light_f, 0.00f);
+
+float4 g_shininess = float4(max((float)Shininess, 1.0f), 0.00f, 0.00f, 0.00f);
+float4 g_intensity = float4(Intensity, 1.00, 0.00, 1.00);
+
+    float4 field_0 = float4(5.0f, 5.0f, 0.5f, 0.5f);
+    float4 field_10 = float4(2.5f, 2.5f, 0.5f, 0.0f);
+    float field_20 = 1.0f;
+    float field_24 = 1.45f;
+    float field_28 = 0.02f;
+    float field_2C = 0.85f;
+    float3 field_30 = float3(1.0f, 1.2f, 0.45f);
+    float3 field_3C = float3(1.0f, 1.2f, 0.25f);
+    float3 field_48 = float3(0.5f, 0.6f, 0.4f);
+    float field_54 = -0.2f;
+    float3 field_58 = float3(1.0f, 1.0f, 1.0f);
+    float field_64 = 0.0f;
+    float3 field_68 = float3(0.0f, 0.0f, 0.0f);
+    float3 field_74 = float3(0.0f, 0.0f, 0.0f);
+    float3 field_80 = float3(0.0f, 0.0f, 0.0f);
+    float field_8C = 0.0;
+    float3 field_90 = float3(0.0f, 0.0f, 0.0f);
+    int frame = 0;
+    float4 field_A0 = float4(0.0f, 0.0f, 0.0f, 0.0f);
+    bool field_B0 = 0;
+    bool field_B1 = 0;
+    bool field_B2 = 0;
+    bool field_B3 = 0;
+    int field_B4 = 0;
+    int field_B8 = 0;
+    int field_BC = 0;
+	
+const float4 _y_coef_601 = float4(0.2989, 0.5866, 0.1145, 1.0);
+	
+
+#if SHADER_TYPE == 0
+	#include "#Shaders/cloth_default.fxsub"
+#elif SHADER_TYPE == 1
+	#include "#Shaders/cloth_default.fxsub"
+#elif SHADER_TYPE == 2
+	#include "#Shaders/cloth_default.fxsub"
+#endif
