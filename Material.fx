@@ -22,6 +22,8 @@
 #define Emission float4(0, 0, 0, 1)
 #define Shininess 50
 #define Intensity 0
+// - - - - - - - - - - -
+#define Bump_depth 1
 
 //====== Flags: ======//
 #define Normal 1
