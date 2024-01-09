@@ -3,7 +3,8 @@
 
 # Shaders Available:
 
- - CLOTH
+ - CLOTH + ( NPR )
+ - EYEBALL
    
 More about to come...
 
