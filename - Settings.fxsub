@@ -55,12 +55,6 @@ float4 g_fog_height_color = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_fog_bump_params = float4(0.00, 1.00, 1000.00, 0.001);
 float4 g_fog_state_params = float4(0.00, 10.00, 1000.00, 0.00101);
 
-float3x3 g_normal_tangent_transforms = {
-    1.00, 0.00, 0.00,
-	0.00, 1.00, 0.00,
-	0.00, 0.00, -1.00
-};
-
 float4 g_esm_param = float4(2296.77051, 0.00, 0.00, 0.00);
 	
 float4 g_self_shadow_receivers[6] = {
@@ -145,9 +139,9 @@ float4 g_foward_z_projection_row2 = float4(0.00, 0.00, -1.00002, -0.10);
 //    float4(0.00, 0.00, 1.00, 0.00)
 //};
 
-float2x2 g_texcoord_transforms = float2x2(
-1.00, 1.00,
-1.00, 1.00);
+float4 g_texcoord_transforms[2] = {
+float4(1.00, 1.00, 1.00, 1.00),
+float4(1.00, 1.00, 1.00, 1.00)};
 	
 float4 g_blend_color = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_offset_color = float4(0.00, 0.00, 0.00, 0.00);
@@ -162,7 +156,7 @@ float4 g_texture_color_offset = float4(0.00, 0.00, 0.00, 0.00);
 float4 g_texture_specular_coefficients = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_texture_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
                               //float4 g_shininess = float4(50.00, 0.00, 0.00, 0.00);
-float4 g_max_alpha = float4(0.00, 0.00, 0.00, 1.00);
+float4 g_max_alpha = float4(0.00, 0.00, 0.99, 1.00);
 float4 g_morph_weight = float4(0.31152, 0.68848, 0.00, 0.00);
 float4 g_sss_param = float4(0.60, 0.00, 0.00, 0.50);
 float4 g_bump_depth = float4(1.00, 1.00, 0.00, 0.00);
