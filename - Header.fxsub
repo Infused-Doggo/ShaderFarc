@@ -14,11 +14,6 @@ float4   Light_Direction  : DIRECTION  < string Object = "Light"; >;
 float2 ViewportSize : VIEWPORTPIXELSIZE;
 static const float2 ViewportOffset = float2(0.5,0.5)/ViewportSize;
 
-#define Controller "Directional_Light.pmx"
-#define LightDir "Directional Light" //Choose the bone used to control the IBL
-float4x4 PrivateLightDir : CONTROLOBJECT < string name = Controller; string item = LightDir ; >;
-static float3 _FixedIBL = PrivateLightDir._31_32_33;
-
 
 // 座法変換行列
 
@@ -80,7 +75,7 @@ bool     transp;   // 半透明フラグ
 #define TRANSLUCENCY Translucency
 
 #define ALPHA_TEST_DEF 1
-#define SELF_SHADOW 0
+#define SELF_SHADOW 1
 #define TONE_CURVE 0
 #define SPECULAR_IBL_2 0
 #define SPECULAR_IBL_1 1
@@ -92,7 +87,7 @@ static float4 g_light_env_chara_ambient = LightDiffuse;
 static float4 g_light_env_chara_specular = LightSpecular;
 
 static float4 g_view_position = float4(CameraPosition.xyz, 0.00);
-static float4 g_light_chara_dir = float4(_FixedIBL.xyz, 0.00);
+static float4 g_light_chara_dir = float4(-LightDirection.xyz, 0.00);
 
 float4 g_material_state_diffuse = Diffuse;
 float4 g_material_state_ambient = Ambient;
