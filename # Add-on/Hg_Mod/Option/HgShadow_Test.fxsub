@@ -1,0 +1,161 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  HgShadow_Test.fxsub : HgShadow シャドウマップテストデータ作成
+//  ( HgShadow_TestAliasingError.fx から呼び出されます．オフスクリーン描画用)
+//  作成: 針金P
+//
+////////////////////////////////////////////////////////////////////////////////////////////////
+// パラメータ宣言
+
+// HgShadowのパラメータを取り込む
+#define HGSHADOW_TEST
+#include "../HgShadow_Header.fxh"
+
+// 座標変換行列
+float4x4 WorldViewMatrix : WORLDVIEW;
+float4x4 ViewProjMatrix  : VIEWPROJECTION;
+float4x4 WorldMatrix     : WORLD;
+float4x4 ViewMatrix      : VIEW;
+float4x4 ProjMatrix      : PROJECTION;
+float4x4 LightWorldViewProjMatrix : WORLDVIEWPROJECTION < string Object = "Light"; >;
+
+float3 CameraPosition  : POSITION  < string Object = "Camera"; >;
+float3 LightDirection  : DIRECTION < string Object = "Light"; >;
+
+// 透過値に対する深度読み取り閾値
+float AlphaClipThreshold = 0.005;
+
+// マテリアル色
+float4 MaterialDiffuse : DIFFUSE  < string Object = "Geometry"; >;
+
+bool use_texture;  // テクスチャの有無
+bool opadd; // 加算合成フラグ
+
+// オブジェクトのテクスチャ
+texture ObjectTexture: MATERIALTEXTURE;
+sampler ObjTexSampler = sampler_state {
+    texture = <ObjectTexture>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+//MMM対応
+
+#ifndef MIKUMIKUMOVING
+    struct VS_INPUT{
+        float4 Pos    : POSITION;
+        float2 Tex    : TEXCOORD0;
+        float4 Normal : NORMAL;
+    };
+    #define MMM_SKINNING
+    #define GETPOS     (IN.Pos)
+    #define GETNORMAL  (IN.Normal)
+    #define GET_VPMAT(p) (ViewProjMatrix)
+#else
+    #define VS_INPUT  MMM_SKINNING_INPUT
+    #define MMM_SKINNING  MMM_SKINNING_OUTPUT SkinOut = MMM_SkinnedPositionNormal(IN.Pos, IN.Normal, IN.BlendWeight, IN.BlendIndices, IN.SdefC, IN.SdefR0, IN.SdefR1);
+    #define GETPOS     (SkinOut.Position)
+    #define GETNORMAL  (SkinOut.Normal)
+    #define GET_VPMAT(p) (MMM_IsDinamicProjection ? mul(ViewMatrix, MMM_DynamicFov(ProjMatrix, length(CameraPosition-p.xyz))) : ViewProjMatrix)
+#endif
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// オブジェクト描画
+
+struct VS_OUTPUT {
+    float4 Pos         : POSITION;     // 射影変換座標
+    float4 ZCalcTex0   : TEXCOORD0;    // Z値
+    float4 ZCalcTex1   : TEXCOORD1;    // Z値
+    float4 ZCalcTex2   : TEXCOORD2;    // Z値
+    float4 ZCalcTex3   : TEXCOORD3;    // Z値
+    float4 MMDZCalcTex : TEXCOORD4;    // Z値 標準マップ
+    float2 Tex         : TEXCOORD5;    // テクスチャ
+    float3 Normal      : TEXCOORD6;    // 法線
+};
+
+// 頂点シェーダ
+VS_OUTPUT VS_Object(VS_INPUT IN)
+{
+    VS_OUTPUT Out = (VS_OUTPUT)0;
+    MMM_SKINNING
+
+    // ワールド座標
+    float4 WPos = mul( GETPOS, WorldMatrix );
+
+    // カメラ視点のビュー射影変換
+    Out.Pos = mul( WPos, GET_VPMAT(WPos) );
+
+    // ライト視点によるワールドビュー射影変換
+    Out.ZCalcTex0 = HgShadow_GetShadowMapLightProjPosition( WPos, 0 );
+    Out.ZCalcTex1 = HgShadow_GetShadowMapLightProjPosition( WPos, 1 );
+    Out.ZCalcTex2 = HgShadow_GetShadowMapLightProjPosition( WPos, 2 );
+    Out.ZCalcTex3 = HgShadow_GetShadowMapLightProjPosition( WPos, 3 );
+    Out.MMDZCalcTex = mul( GETPOS, LightWorldViewProjMatrix );
+
+    // 頂点法線
+    Out.Normal = normalize( mul( GETNORMAL, (float3x3)WorldMatrix ) );
+
+    // テクスチャ座標
+    Out.Tex = IN.Tex;
+
+    return Out;
+}
+
+// ピクセルシェーダ
+float4 PS_Object(VS_OUTPUT IN) : COLOR
+{
+    // 加算合成モデルは描画しない
+    clip( !opadd - 0.001f );
+
+    // α値
+    float alpha = MaterialDiffuse.a;
+    if ( use_texture ) {
+        // テクスチャ透過値適用
+        alpha *= tex2D( ObjTexSampler, IN.Tex ).a;
+    }
+    // α値が閾値以下の箇所はシャドウマップには描画しない
+    clip(alpha - AlphaClipThreshold);
+
+    // テクスチャ座標に変換
+    HgShadow_SMapDat ZPlot = HgShadow_GetShadowMapTexCoord(IN.ZCalcTex0, IN.ZCalcTex1, IN.ZCalcTex2, IN.ZCalcTex3, IN.MMDZCalcTex);
+
+    return float4(ZPlot.Tex1.xy, 0.0f, 1.0f);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// テクニック
+
+technique MainTec0 < string MMDPass = "object"; > {
+/*
+    pass DrawObject {
+        AlphaBlendEnable = FALSE;
+        AlphaTestEnable = FALSE;
+        VertexShader = compile vs_3_0 VS_Object();
+        PixelShader  = compile ps_3_0 PS_Object();
+    }
+*/
+}
+
+technique MainTecBS0  < string MMDPass = "object_ss"; > {
+    pass DrawObject {
+        AlphaBlendEnable = FALSE;
+        AlphaTestEnable = FALSE;
+        VertexShader = compile vs_3_0 VS_Object();
+        PixelShader  = compile ps_3_0 PS_Object();
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+
+// 輪郭は描画しない
+technique EdgeTec < string MMDPass = "edge"; > { }
+// 地面影は描画しない
+technique ShadowTec < string MMDPass = "shadow"; > { }
+
