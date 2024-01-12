@@ -89,6 +89,7 @@ struct vs_in
 struct vs_out
 {
 	float4 position         : SV_POSITION;
+	float2 fragcoord        : TEXCOORD9;
 	float4 fog_color        : TEXCOORD3; //xyz=fog_color, w=fog
 	float4 texcoord         : TEXCOORD0; //xy=texcoord0, zw=texcoord1
 	float3 texcoord_shadow0 : TEXCOORD1;
@@ -134,6 +135,10 @@ vs_out vs_model (vs_in i)
         pos_c = mul(float4(a_position.xyz, 1.0), g_transforms);
     #endif
     o.position = pos_c;
+	
+	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
+    1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
+	o.fragcoord = fragcoord.xy;
 	
 	o.normal.xyz = normal_w;
     if (NORMAL) { // #if NORMAL_DEF
@@ -207,6 +212,8 @@ float4 ps_model(vs_out i) : COLOR0
 	float3 frg_binormal = i.binormal;
 	float4 frg_normal = i.normal; //xyz=normal, w=fresnel
 	float4 frg_eye = i.eye; //xyz=eye, w=face_offset
+//============================================================================//
+	gl_FragCoord.xy = i.fragcoord;
 	float4 result;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
     //#if U16_DEF
@@ -246,6 +253,7 @@ float4 ps_model(vs_out i) : COLOR0
         }
         else { // #else
             lc = 1.0;
+			lc = HgShadow_GetSelfShadowRate(gl_FragCoord);  // !!
         } // #endif
 
         float3 ybr;
