@@ -5,6 +5,10 @@
 
  - CLOTH + ( NPR )
  - EYEBALL
+ - SKIN + (SSS)
+
+# - Additional
+(Modded) Hg_Shadow v0.4
    
 More about to come...
 
