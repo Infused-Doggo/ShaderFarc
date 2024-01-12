@@ -10,9 +10,7 @@
 #define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
 #define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
 #define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
-
 //================================================================//
-
 
 float4x4 State_Matrix_Program_7 : WORLD;
 
@@ -25,19 +23,46 @@ float4   Light_Direction  : DIRECTION  < string Object = "Light"; >;
 
 float2 ViewportSize : VIEWPORTPIXELSIZE;
 static const float2 ViewportOffset = float2(0.5,0.5)/ViewportSize;
+static const float4 g_framebuffer_size = float4(1 + ViewportOffset.xyxy);
 
 #define Controller "Directional_Light.pmx"
 #define LightDir "Directional Light" //Choose the bone used to control the IBL
 
 #define IBL_Dir 1
+
 #if IBL_Dir
-float4x4 g_normal_tangent_transforms : CONTROLOBJECT < string name = Controller; string item = LightDir ; >;
-static float3 _FixedIBL = -g_normal_tangent_transforms._31_32_33;
+float4x4 Light_Controller : CONTROLOBJECT < string name = Controller; string item = LightDir ; >;
+static float3 _FixedIBL = -Light_Controller._31_32_33;
+
+static float3 rotationAngles = float3(radians(float3(0, -45, 0)));
+
+static float4x4 rotationX = {
+    1, 0, 0, 0,
+    0, cos(rotationAngles.x), sin(rotationAngles.x), 0,
+    0, -sin(rotationAngles.x), cos(rotationAngles.x), 0,
+    0, 0, 0, 1
+};
+
+static float4x4 rotationY = {
+    cos(rotationAngles.y), 0, -sin(rotationAngles.y), 0,
+    0, 1, 0, 0,
+    sin(rotationAngles.y), 0, cos(rotationAngles.y), 0,
+    0, 0, 0, 1
+};
+
+static float4x4 rotationZ = {
+    cos(rotationAngles.z), sin(rotationAngles.z), 0, 0,
+    -sin(rotationAngles.z), cos(rotationAngles.z), 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+};
+
+static float3x3 g_normal_tangent_transforms = (float3x3)mul(mul(mul(Light_Controller, rotationX), rotationY), rotationZ);
 #else
 float3x3 g_normal_tangent_transforms = {
-    1.00, 0.00, 0.00,
-	0.00, 1.00, 0.00,
-	0.00, 0.00, -1.00
+    1.00, 1.00, -1.00,
+	1.00, 1.00, -1.00,
+	1.00, 1.00, -1.00
 };
 #endif
 
@@ -211,10 +236,12 @@ float2 gl_FragCoord = 1;
 	#define NPR 1
 #endif
 	
+#include "#Shaders/#Include/+ HgShadow.fxh"
+
 #if SHADER_TYPE == 0
 	#include "#Shaders/cloth_default.fxsub"
 #elif SHADER_TYPE == 1
-	#include "#Shaders/cloth_default.fxsub"
+	#include "#Shaders/skin_default.fxsub"
 #elif SHADER_TYPE == 2
 	#if NPR
 		#include "#Shaders/cloth_npr1.fxsub"
@@ -226,4 +253,6 @@ float2 gl_FragCoord = 1;
 	
 #elif SHADER_TYPE == 5
 	#include "#Shaders/glass_eye.fxsub"
+#elif SHADER_TYPE == 6
+	#include "#Shaders/sss_skin.fxsub"
 #endif

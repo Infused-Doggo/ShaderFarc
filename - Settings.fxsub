@@ -68,7 +68,7 @@ float4 g_self_shadow_receivers[6] = {
 
 float4 g_shadow_ambient = float4(0.40, 0.40, 0.40, 1.00);
 float4 g_shadow_ambient1 = float4(0.60, 0.60, 0.60, 0.00);
-float4 g_framebuffer_size = float4(0.00078, 0.00139, 0.00078, 0.00139);
+
 float4 g_light_reflect_dir = float4(0.9955, 0.00755, -0.09445, 0.00);
 float4 g_clip_plane = float4(0.00, -1.00, 0.00, 0.00);
 float4 g_npr_cloth_spec_color = float4(1.00, 1.00, 1.00, 1.00);
@@ -153,6 +153,13 @@ float4 g_offset_color = float4(0.00, 0.00, 0.00, 0.00);
 //float4 g_fresnel_coefficients = float4(0.1904, 0.18, 0.555, 0.00);
 float4 g_texture_color_coefficients = float4(1.00, 1.00, 1.00, 0.00);
 float4 g_texture_color_offset = float4(0.00, 0.00, 0.00, 0.00);
+
+float4 g_tex2D_color_coefficients = float4(1.00, 1.00, 1.00, 0.00);
+float4 g_tex2D_color_offset = float4(0.00, 0.00, 0.00, 0.00);
+
+float4 g_tex2D_specular_coefficients = float4(1.00, 1.00, 1.00, 1.00);
+float4 g_tex2D_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
+
 float4 g_texture_specular_coefficients = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_texture_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
                               //float4 g_shininess = float4(50.00, 0.00, 0.00, 0.00);
