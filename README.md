@@ -25,7 +25,7 @@ X Commercial use is not exactly allowed. (As long as it is not used as a busines
 ## Credits:
 Sega AM2    : Devs of PDA and Graphics.
 
-DivaGL      : Shaders n' code were used.
+Korenkonder : Shaders n' code were used from [DivaGL](https://github.com/korenkonder/DivaGL/tree/master).
 
 Infu_D      : Project leader.
 
