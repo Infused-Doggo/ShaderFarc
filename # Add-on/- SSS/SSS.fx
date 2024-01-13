@@ -1,13 +1,27 @@
 
 //==============================//
 float Script : STANDARDSGLOBAL <
-	string ScriptOutput = "color";
-	string ScriptClass = "scene";
-	string ScriptOrder = "postprocess";
+    string ScriptOutput = "color";
+    string ScriptClass = "scene";
+    string ScriptOrder = "postprocess";
 > = 0.8;
 //==============================//
 
 // オリジナルの描画結果を記録するためのレンダーターゲット
+//=== SSS ===//
+texture SSS_SF : OFFSCREENRENDERTARGET
+<   string Description = "SSS Material Array";
+    float2 ViewPortRatio = {1.0f, 1.0f};
+    float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
+    float ClearDepth = 1.0f;
+	bool AntiAlias = true;
+	int Miplevels = 0;
+	string Format = "A16B16G16R16F";
+	string DefaultEffect = 
+        "self = hide;"
+        "*=SSS_Base.fx;";
+>;
+
 texture2D ScnMap : RENDERCOLORTARGET <
 	float2 ViewportRatio = {1,1};
 	bool AntiAlias = true;
@@ -25,24 +39,13 @@ sampler2D ScnSamp = sampler_state {
 };
 
 //  Textures / Samplers  :
-//=== SSS ===//
-texture2D SSS_SF : OFFSCREENRENDERTARGET
-<   string Description = "SSS Material Array";
-    float2 ViewPortRatio = {1.0f/4, 1.0f/4};
-    float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
-    float ClearDepth = 1.0f;
-	bool AntiAlias = true;
-	int Miplevels = 0;
-	string Format = "A16B16G16R16F";
-	string DefaultEffect =
-	    //"self=hide;"
-	    "*=+/Blackout.fx;";>;
+
 
 shared texture2D g_sss : RENDERCOLORTARGET <
-	bool AntiAlias = true;
+	bool AntiAlias = false;
 	int Miplevels = 0;
-	float2 ViewPortRatio = {0.75f, 0.75f};
 	string Format = "A16B16G16R16F";
+	float2 ViewPortRatio = {1.0f, 1.0f};
 >;
 sampler2D g_sss_sampler = sampler_state {
 	texture = <g_sss>;
@@ -54,13 +57,13 @@ sampler2D g_sss_sampler = sampler_state {
 };
 
 texture2D ExpandTex : RENDERCOLORTARGET <
-	bool AntiAlias = true;
+	bool AntiAlias = false;
 	int Miplevels = 0;
-	float2 ViewPortRatio = {0.5f, 0.5f};
+	float2 ViewPortRatio = {1.0f, 1.0f};
 	string Format = "A16B16G16R16F";
 >;
 sampler2D g_expand_s = sampler_state {
-	texture = <ExpandTex>;
+	texture = <SSS_SF>;
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
@@ -82,7 +85,7 @@ texture2D DepthBuffer : RENDERDEPTHSTENCILTARGET <
 >;
 
 // レンダリングターゲットのクリア値
-float4 ClearColor = {0,0,0,0};
+float4 ClearColor = {1,1,1,0};
 float ClearDepth  = 1.0;
 
 float2 ViewportSize : VIEWPORTPIXELSIZE;
@@ -129,6 +132,39 @@ vs_out vs_model (vs_in i)
 }
 //============================================================================//
 // Fragment Shader(s) :
+float4 ps_expand(vs_out i) : COLOR0
+{	
+  float4 r0 = 1;
+  float4 r1 = 1;
+  float4 r2 = 1;
+		
+  float4 v1 = i.o1;
+  float4 v2 = i.o3;
+  float4 v3 = i.o4;
+  float4 o0 = 0;
+  
+  r0.xyzw = tex2D(SSSS, v1.xy).xyzw;
+  r1.x = cmp(r0.w == 1.000000);
+  if (r1.x != 0) {
+    o0.xyz = r0.xyz;
+    o0.w = 1;
+    return o0;
+  }
+  r1.xyzw = tex2D(SSSS, v2.xy).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(SSSS, v2.zw).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(SSSS, v3.xy).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(SSSS, v3.zw).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  o0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  return o0;
+}
+
 float4 ps_model(vs_out i) : COLOR0
 {	
 	float4 r0 = 1;
@@ -343,53 +379,23 @@ float4 ps_model(vs_out i) : COLOR0
   return o0;
 }
 
-float4 ps_expand(vs_out i) : COLOR0
-{	
-  float4 r0 = 1;
-  float4 r1 = 1;
-  float4 r2 = 1;
-		
-  float4 v1 = i.o1;
-  float4 v2 = i.o3;
-  float4 v3 = i.o4;
-  float4 o0 = 0;
-  
-  r0.xyzw = tex2D(SSSS, v1.xy).xyzw;
-  r1.x = cmp(r0.w == 1.000000);
-  if (r1.x != 0) {
-    o0.xyz = r0.xyz;
-    o0.w = 1;
-    return o0;
-  }
-  r1.xyzw = tex2D(SSSS, v2.xy).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(SSSS, v2.zw).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(SSSS, v3.xy).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(SSSS, v3.zw).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  o0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  return o0;
-}
-
 float4 ps_screen(vs_out i, float2 UV : TEXCOORD0) : COLOR0
 {	
   return tex2D(ScnSamp, UV).xyzw;
 }
 //============================================================================//
 //  Technique(s)  : 
-technique SSS <
-	string Script = 
-"RenderColorTarget0=ExpandTex;"
+technique SSS < string MMDPass = "object";
+    string Script = 
+		"RenderColorTarget0=ExpandTex;"
 		"Pass=Expand;"
 		"RenderColorTarget0=g_sss;"
+		    "RenderDepthStencilTarget=DepthBuffer;"
+            "ClearSetColor=ClearColor;"
+            "ClearSetDepth=ClearDepth;"
+            "Clear=Color;"
+            "Clear=Depth;"
 		"Pass=Main;"
-		
-		
 		
 		"RenderColorTarget0=ScnMap;"
 		"RenderDepthStencilTarget=DepthBuffer;"
@@ -398,21 +404,21 @@ technique SSS <
 		"Clear=Color;"
 		"Clear=Depth;"
 		"ScriptExternal=Color;"
-		
+
         "RenderColorTarget0=;"
 		"RenderDepthStencilTarget=;"
 		"Pass=Screen;"
 	;
 > {
-	pass Main < string Script= "Draw=Buffer;"; > {
-		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
-		VertexShader = compile vs_3_0 vs_model();
-        PixelShader = compile ps_3_0 ps_model();
-	}
 	pass Expand < string Script= "Draw=Buffer;"; > {
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
 		VertexShader = compile vs_3_0 vs_model();
         PixelShader = compile ps_3_0 ps_expand();
+	}
+	pass Main < string Script= "Draw=Buffer;"; > {
+		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
+		VertexShader = compile vs_3_0 vs_model();
+        PixelShader = compile ps_3_0 ps_model();
 	}
 	pass Screen < string Script= "Draw=Buffer;"; > {
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
