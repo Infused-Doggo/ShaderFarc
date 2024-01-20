@@ -5,13 +5,16 @@
 
  - CLOTH + ( NPR )
  - EYEBALL
- - SKIN + (SSS)
+ - SKIN + ( SSS )
+ - HAIR + ( Aniso )
 
 # - Additional
-(Modded) Hg_Shadow v0.4
+ - Hg Custom FX
    
 More about to come...
 
+I also got a Ko-fi for anyone who's interested on supporting this project.
+https://ko-fi.com/infu_d
 
 I don't feel like documenting the whole thing rn...
 
