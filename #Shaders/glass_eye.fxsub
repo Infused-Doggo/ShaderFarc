@@ -139,16 +139,16 @@ vs_out vs_model (vs_in i)
     vs_out o = (vs_out)0;
 // - - - - - - - - - - - - - - - - - - - - //
 	float3 a_position  = i.a_position;
-	float3 a_normal    = i.a_normal;
-	float2 a_texcoord  = i.a_texcoord;
+	float3 a_normal    = i.a_normal * float3(1, 1, -1);
+	float2 a_texcoord  = i.a_texcoord + float2(0, 1);
 // - - - - - - - - - - - - - - - - - - - - //
     float4 pos_w;
     float3 normal_w;
     float4 pos_c;
     float3 normal_v;
     #if BONE_MAT_DEF
-        ifloat4 mtxidx = max(ifloat4(0.0), a_matrix_index);
-        float4 weight = mix(float4(0.0), a_weight, greaterThanEqual(a_matrix_index, ifloat4(0.0)));
+        ivec4 mtxidx = max(ivec4(0.0), a_matrix_index);
+        vec4 weight = mix(vec4(0.0), a_weight, greaterThanEqual(a_matrix_index, ivec4(0.0)));
 
         pos_w = apply_skinning(a_position, mtxidx, weight);
         normal_w = apply_skinning_rotation(a_normal, mtxidx, weight);
@@ -156,12 +156,12 @@ vs_out vs_model (vs_in i)
         normal_v = normal_w * mat3(g_worldview);
         pos_c = pos_w * g_transforms;
     #else
-        pos_w.xyz = (mul(float4(a_position.xyz, 1.0), (float4x4)g_worlds)).xyz;
+        pos_w.xyz = mul(float4(a_position, 1.0), (float4x4)g_worlds).xyz;
         pos_w.w = 1.0;
         normal_w = mul(a_normal, (float3x3)g_worlds);
 
         normal_v = mul(normal_w, (float3x3)g_worldview);
-        pos_c = mul(float4(a_position.xyz, 1.0), g_transforms);
+        pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
 
     o.position = pos_c;
@@ -183,14 +183,14 @@ vs_out vs_model (vs_in i)
         o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[0];
     } // #endif
 
-    float2 pos_m = tex_eb * float2(-1.0, 1.0) + float2(1.0, 1.0);
+    float2 pos_m = tex_eb * float2(-1.0, 1.0) + float2(1.0, 0.0);
     pos_m -= g_tex_model_param.zw;
     pos_m *= g_tex_model_param.xy;
     o.cornea_coord.xy = pos_m;
     o.cornea_coord.zw = pos_m * g_ellipsoid_scale.xy;
 
     float3 pos_eb;
-    pos_eb.xy = tex_eb * float2(-1.0, 1.0) + float2(1.0, 1.0);
+    pos_eb.xy = tex_eb * float2(-1.0, 1.0) + float2(1.0, 0.0);
     pos_eb.xy -= g_eb_tex_model_param.zw;
     pos_eb.xy *= g_eb_tex_model_param.xy;
     float eb = dot(pos_eb.xy * g_eb_radius.xy, pos_eb.xy) * -g_eb_radius.w + g_eb_radius.w;
@@ -198,7 +198,7 @@ vs_out vs_model (vs_in i)
 
     o.normal_spec = mul(normalize(pos_eb * 2.0 * g_eb_radius.xyz), (float3x3)g_worlds);
 
-    float3 eye_w = g_view_position.xyz - pos_w.xyz;
+    float3 eye_w = (g_view_position.xyz - pos_w.xyz) * float3(1, 1, -1);
     o.eye.xyz = eye_w;
 
     eye_w = normalize(eye_w);
@@ -242,7 +242,7 @@ float4 ps_model(vs_out i) : COLOR0
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 	result = float4(1.0, 0.0, 0.0, 1.0);
 
-    float3 eye = inv(normalize(frg_eye.xyz));
+    float3 eye = normalize(frg_eye.xyz);
 
     float lc;
     if (SELF_SHADOW) { // #if SELF_SHADOW_DEF
@@ -250,11 +250,10 @@ float4 ps_model(vs_out i) : COLOR0
     }
     else { // #else
         lc = 1.0;
-		lc = HgShadow_GetSelfShadowRate(gl_FragCoord);  // !!
     } // #endif
 
     if (dot(frg_cornea_coord.xy, frg_cornea_coord.xy) > 0.96) {
-        float3 nrm_cornea1 = inv(normalize(frg_normal_diff));
+        float3 nrm_cornea1 = normalize(frg_normal_diff);
 
         float3 rot_ray = mul(nrm_cornea1, (float3x3)g_normal_tangent_transforms);
         float3 diff = get_ibl_diffuse(g_ibl_diffuse_s, rot_ray, lc);
@@ -279,7 +278,7 @@ float4 ps_model(vs_out i) : COLOR0
 
         diff *= tex2D(g_diffuse_s, frg_texcoord.xy).rgb;
 
-        float3 ray = mul(-reflect(eye, inv(frg_normal_spec)), (float3x3)g_normal_tangent_transforms);
+        float3 ray = mul(-reflect(eye, frg_normal_spec), (float3x3)g_normal_tangent_transforms);
 
         float3 ibl_spec = texCUBE(g_ibl_specular_s, ray).rgb;
         float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, ray).rgb;

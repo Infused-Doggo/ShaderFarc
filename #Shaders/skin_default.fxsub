@@ -149,6 +149,7 @@ struct vs_in
 struct vs_out
 {
 	float4 position         : SV_POSITION;
+	float3 vertcoord        : TEXCOORD8;
 	float2 fragcoord        : TEXCOORD9;
 	float4 fog_color        : TEXCOORD3; //xyz=fog_color, w=fog
 	float2 texcoord         : TEXCOORD0;
@@ -165,7 +166,7 @@ vs_out vs_model (vs_in i)
     vs_out o = (vs_out)0;
 // - - - - - - - - - - - - - - - - - - - - //
 	float3 a_position  = i.a_position;
-	float3 a_normal    = i.a_normal;
+	float3 a_normal    = inv(i.a_normal);
 	float4 a_tangent   = i.a_tangent;
 	float2 a_texcoord  = i.a_texcoord;
 // - - - - - - - - - - - - - - - - - - - - //
@@ -185,15 +186,17 @@ vs_out vs_model (vs_in i)
         normal_v = normal_w * mat3(g_worldview);
         pos_c = pos_w * g_transforms;
     #else
-        pos_w.xyz = (mul(float4(a_position.xyz, 1.0), (float4x4)g_worlds)).xyz;
+        pos_w.xyz = mul(float4(a_position, 1.0), (float4x4)g_worlds).xyz;
         pos_w.w = 1.0;
         normal_w = mul(a_normal, (float3x3)g_worlds);
         tangent_w = mul(a_tangent.xyz, (float3x3)g_worlds);
 
         normal_v = mul(a_normal, (float3x3)g_worldview);
-        pos_c = mul(float4(a_position.xyz, 1.0), g_transforms);
+        pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
     o.position = pos_c;
+	
+	o.vertcoord = pos_w.xyz;
 	
 	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
     1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
@@ -219,7 +222,7 @@ vs_out vs_model (vs_in i)
     } // #endif
 
     float4 eye_w;
-    eye_w.xyz = g_view_position.xyz - pos_w.xyz;
+    eye_w.xyz = inv(g_view_position.xyz - pos_w.xyz);
     o.eye.xyz = eye_w.xyz;
 
     eye_w.xyz = normalize(eye_w.xyz);
@@ -255,12 +258,13 @@ vs_out vs_model (vs_in i)
 // Fragment Shader(s) :
 float4 ps_model(vs_out i) : COLOR0
 {
+	float4x4 Frame = CTF(i.vertcoord, float4(i.normal, 0), float4(i.texcoord, 0, 0));
 	float4 frg_fog_color = i.fog_color; //xyz=fog_color, w=fog
 	float2 frg_texcoord = i.texcoord;
 	float3 frg_texcoord_shadow0 = i.texcoord_shadow0;
-	float3 frg_tangent = i.tangent;
-	float3 frg_binormal = i.binormal;
-	float3 frg_normal = i.normal;
+	float3 frg_tangent = Frame[0].xyz;
+	float3 frg_binormal = Frame[1].xyz;
+	float4 frg_normal = Frame[2]; //xyz=normal, w=#
 	float4 frg_eye = i.eye; //xyz=eye, w=face_offset
 //============================================================================//
 	gl_FragCoord.xy = i.fragcoord;
@@ -288,13 +292,13 @@ float4 ps_model(vs_out i) : COLOR0
         normal = frg_normal;
         normal += frg_tangent * tmp.x;
         normal += frg_binormal * tmp.y;
-        normal = inv(normalize(normal));
+        normal = normalize(normal);
     }
     else { // #else
-        normal = inv(normalize(frg_normal));
+        normal = normalize(frg_normal);
     } // #endif
 
-    float3 eye = inv(normalize(frg_eye.xyz));
+    float3 eye = normalize(frg_eye.xyz);
     float3 org_normal = normal;
     float3 org_eye = eye;
 
@@ -319,7 +323,6 @@ float4 ps_model(vs_out i) : COLOR0
         }
         else { // #else
             lc = 1.0;
-			lc = HgShadow_GetSelfShadowRate(gl_FragCoord);  // !!
         } // #endif
     //#else
     //    lc = 1.0;
@@ -369,8 +372,8 @@ float4 ps_model(vs_out i) : COLOR0
     //    } // #endif
     //#endif
 
-    col0.rgb *= g_tex2D_color_coefficients.rgb;
-    col0.rgb += g_tex2D_color_offset.rgb;
+    col0.rgb *= g_texture_color_coefficients.rgb;
+    col0.rgb += g_texture_color_offset.rgb;
 
     diff *= col0.rgb;
     diff *= 0.98;
@@ -387,8 +390,8 @@ float4 ps_model(vs_out i) : COLOR0
     ibl_spec *= lc * spec.a * 0.7 + 0.3;
 
     spec_ratio.rgb = (spec_ratio.x + g_tex2D_color_coefficients.w);
-    spec_ratio.rgb *= g_tex2D_specular_coefficients.rgb;
-    spec_ratio.rgb += g_tex2D_specular_offset.rgb;
+    spec_ratio.rgb *= g_texture_specular_coefficients.rgb;
+    spec_ratio.rgb += g_texture_specular_offset.rgb;
 
     diff += ibl_spec * spec_ratio.rgb;
 

@@ -261,26 +261,5 @@ float2 gl_FragCoord;
 	#define NPR 1
 #endif
 	
-#include "#Shaders/#Include/+ HgShadow.fxh"
-
-#if SHADER_TYPE == 0
-	#include "#Shaders/cloth_default.fxsub"
-#elif SHADER_TYPE == 1
-	#include "#Shaders/skin_default.fxsub"
-#elif SHADER_TYPE == 2
-	#if NPR
-		#include "#Shaders/cloth_npr1.fxsub"
-	#elif ANISO == 1
-		//#include "#Shaders/cloth_aniso.fxsub"
-	#else
-		#include "#Shaders/cloth_default.fxsub"
-	#endif
-#elif SHADER_TYPE == 4
-	#include "#Shaders/hair_default.fxsub"
-#elif SHADER_TYPE == 5
-	#include "#Shaders/glass_eye.fxsub"
-#elif SHADER_TYPE == 6
-	#include "#Shaders/sss_skin.fxsub"
-#elif SHADER_TYPE == 99
-	#include "#Shaders/aniso.fxsub"
-#endif
+	#include "+/+ HgShadow.fxh"
+	#include "+/aniso.fxsub"
