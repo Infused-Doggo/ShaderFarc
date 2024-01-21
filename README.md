@@ -7,6 +7,8 @@
  - EYEBALL
  - SKIN + ( SSS )
  - HAIR + ( Aniso )
+ - TIGHTS
+ - ITEM
 
 # - Additional
  - Hg Custom FX
