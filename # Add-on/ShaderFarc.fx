@@ -393,7 +393,7 @@ float4 ps_aniso(vs_out i) : COLOR0
   float Pi = 6.28318530718; // Pi*2
     
     // GAUSSIAN BLUR SETTINGS {{{
-    float Directions = 8.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
+    float Directions = 12.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
     float Quality = 4.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
     float Size = 8 * saturate(1-tex2D(DS, v1)/100); // BLUR SIZE (Radius)
     // GAUSSIAN BLUR SETTINGS }}}
@@ -418,7 +418,7 @@ float4 ps_aniso(vs_out i) : COLOR0
     Color /= Quality * Directions;
 	Color = lerp(tex2D(ExpandAniso, uv), Color, 1);
 	Color = lerp(0, Color, (tex2D(ScnSamp, uv).w));
-	  return pow(Color, 0.3);
+	  return pow(Color, 1/2.2);
 }
 
 float4 ps_screen(vs_out i, float2 UV : TEXCOORD0) : COLOR0
