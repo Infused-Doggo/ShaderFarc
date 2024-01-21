@@ -225,7 +225,7 @@ vs_out vs_model (vs_in i)
         normal_v = mul(a_normal, (float3x3)g_worldview);
         pos_c = mul(float4(a_position, 1.0), g_transforms);
 
-        o.texcoord_shadow0.w = 0.0;
+        o.texcoord_shadow0.w = 1.0;
     #endif
     o.position = pos_c;
 	
