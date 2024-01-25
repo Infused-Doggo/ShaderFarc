@@ -80,11 +80,11 @@ VS_OUTPUT Basic_VS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 Tex : T
     Out.Normal = normalize( mul( Normal, (float3x3)WorldMatrix ) );
     
     // ディフューズ色＋アンビエント色 計算
-    Out.Color.rgb = 0.30357;
+    Out.Color.rgb = 0;
     Out.Color.a = DiffuseColor.a;
     
     // テクスチャ座標
-    Out.Tex = 0.30357;
+    Out.Tex = Tex;
     
     // スペキュラ色計算
     float3 HalfVector = normalize( normalize(Out.Eye) + -LightDirection );
@@ -101,15 +101,7 @@ float4 Basic_PS( VS_OUTPUT IN ) : COLOR0
         // テクスチャ適用
         Color *= tex2D( ObjTexSampler, IN.Tex );
     }
-    if ( use_toon ) {  //同上
-        // トゥーン適用
-        float LightNormal = dot( IN.Normal, -LightDirection );
-        Color *= tex2D(ToonTexSampler, float2(0, 0.5 - LightNormal * 0.5) );
-    }
-    // スペキュラ適用
-    Color.rgb += 0.30357;
-    
-    return float4(0, 0, 0, Color.a);
+    return Color;
 }
 
 // オブジェクト描画用テクニック
@@ -119,60 +111,6 @@ technique MainTec < string MMDPass = "object"; > {
         VertexShader = compile vs_2_0 Basic_VS();
         PixelShader  = compile ps_2_0 Basic_PS();
     }
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////
-// オブジェクト描画（セルフシャドウON）
-
-// シャドウバッファのサンプラ。"register(s0)"なのはMMDがs0を使っているから
-sampler DefSampler : register(s0);
-
-struct BufferShadow_OUTPUT
-{
-    float4 Pos      : POSITION;     // 射影変換座標
-    float4 ZCalcTex : TEXCOORD0;    // Z値
-    float2 Tex      : TEXCOORD1;    // テクスチャ
-    float3 Normal   : TEXCOORD2;    // 法線
-    float3 Eye      : TEXCOORD3;    // カメラとの相対位置
-    float4 Color    : COLOR0;       // ディフューズ色
-};
-
-// 頂点シェーダ
-BufferShadow_OUTPUT BufferShadow_VS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 Tex : TEXCOORD0)
-{
-    BufferShadow_OUTPUT Out = (BufferShadow_OUTPUT)0;
-
-    // カメラ視点のワールドビュー射影変換
-    Out.Pos = mul( Pos, WorldViewProjMatrix );
-    
-    // カメラとの相対位置
-    Out.Eye = CameraPosition - mul( Pos, WorldMatrix );
-    // 頂点法線
-    Out.Normal = normalize( mul( Normal, (float3x3)WorldMatrix ) );
-	// ライト視点によるワールドビュー射影変換
-    Out.ZCalcTex = mul( Pos, LightWorldViewProjMatrix );
-    
-    // ディフューズ色＋アンビエント色 計算
-    Out.Color.rgb = 0.30357;
-    Out.Color.a = DiffuseColor.a;
-    
-    // テクスチャ座標
-    Out.Tex = Tex;
-    
-    return Out;
-}
-
-// ピクセルシェーダ
-float4 BufferShadow_PS( BufferShadow_OUTPUT IN ) : COLOR
-{
-   
-        float4 ans = 0.30357;
-		ans.yz = 0;
-		ans.w = 1;
-
-        return float4(0, 0, 0, 1);
-    
 }
 
 // オブジェクト描画用テクニック

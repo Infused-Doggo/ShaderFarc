@@ -1,4 +1,12 @@
 
+//=== Settings: ===//
+// SSS:
+float4 SSS_Tone = float4(1.00, 0.96, 1.00, 0.00); // SSS Multiplier
+
+// Aniso:
+float Size = 8.0f; // Blur Size (Radius)
+//  More settings in "ps_aniso".
+
 //==============================//
 float Script : STANDARDSGLOBAL <
     string ScriptOutput = "color";
@@ -9,28 +17,28 @@ float Script : STANDARDSGLOBAL <
 
 // オリジナルの描画結果を記録するためのレンダーターゲット
 //=== SSS ===//
-texture SSS_SF : OFFSCREENRENDERTARGET
+shared texture SSS_SF : OFFSCREENRENDERTARGET
 <   string Description = "SSS Material Array";
     float2 ViewPortRatio = {1.0f, 1.0f};
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
-	int Miplevels = 0;
-	string Format = "A16B16G16R16F";
+	int Miplevels = 1;
+	string Format = "D3DFMT_A16B16G16R16F";
 	string DefaultEffect = 
         "self = hide;"
         "*=SSS/SSS_Base.fx;";
 >;
 
 //=== ANISO ===//
-texture ANISO_SF : OFFSCREENRENDERTARGET
+shared texture ANISO_SF : OFFSCREENRENDERTARGET
 <   string Description = "(ANISO) U/V/Radial Array";
     float2 ViewPortRatio = {1.0f, 1.0f};
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
-	int Miplevels = 0;
-	string Format = "A16B16G16R16F";
+	int Miplevels = 1;
+	string Format = "D3DFMT_A16B16G16R16F";
 	string DefaultEffect = 
         "self = hide;"
         "*=Aniso/V.fx;";
@@ -43,8 +51,8 @@ texture DEPTH_SF : OFFSCREENRENDERTARGET
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
-	int Miplevels = 0;
-	string Format = "R32F";
+	int Miplevels = 1;
+	string Format = "D3DFMT_R32F";
 	string DefaultEffect = 
         "self = hide;"
         "*=Aniso/+/Depth.fx;";
@@ -55,24 +63,22 @@ sampler2D DS = sampler_state {
 	MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
+    ADDRESSU  = CLAMP;
+    ADDRESSV  = CLAMP;
 };
 
 texture2D ScnMap : RENDERCOLORTARGET <
-	float2 ViewportRatio = {1,1};
-	bool AntiAlias = true;
-	int MipLevels = 1;
-	string Format = "A16B16G16R16F";
+    float2 ViewPortRatio = {1.0,1.0};
+    int MipLevels = 1;
+    string Format = "D3DFMT_A8R8G8B8";
 >;
-
 sampler2D ScnSamp = sampler_state {
-	texture = <ScnMap>;
-	MINFILTER = LINEAR;
-    MAGFILTER = LINEAR;
-    MIPFILTER = LINEAR;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
+    texture = <ScnMap>;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = NONE;
+    AddressU = CLAMP;
+    AddressV = CLAMP;
 };
 
 //  Textures / Samplers  :
@@ -87,10 +93,10 @@ sampler2D SSSS = sampler_state {
 };
 
 texture2D ExpandTex : RENDERCOLORTARGET <
-	bool AntiAlias = false;
-	int Miplevels = 0;
+	bool AntiAlias = true;
+	int Miplevels = 1;
 	float2 ViewPortRatio = {1.0f, 1.0f};
-	string Format = "A16B16G16R16F";
+	string Format = "D3DFMT_A16B16G16R16F";
 >;
 
 sampler2D ExpandAniso = sampler_state {
@@ -98,8 +104,8 @@ sampler2D ExpandAniso = sampler_state {
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
+    ADDRESSU  = CLAMP;
+    ADDRESSV  = CLAMP;
 };
 
 sampler2D g_texture_s = sampler_state {
@@ -107,21 +113,21 @@ sampler2D g_texture_s = sampler_state {
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
+    ADDRESSU  = CLAMP;
+    ADDRESSV  = CLAMP;
 };
 
 shared texture2D g_sss : RENDERCOLORTARGET <
-	bool AntiAlias = false;
+	bool AntiAlias = true;
 	int Miplevels = 0;
-	string Format = "A16B16G16R16F";
+	string Format = "D3DFMT_A16B16G16R16F";
 	float2 ViewPortRatio = {1.0f, 1.0f};
 >;
 
 shared texture2D g_aniso : RENDERCOLORTARGET <
-	bool AntiAlias = false;
+	bool AntiAlias = true;
 	int Miplevels = 0;
-	string Format = "A16B16G16R16F";
+	string Format = "D3DFMT_A16B16G16R16F";
 	float2 ViewPortRatio = {1.0f, 1.0f};
 >;
 
@@ -130,7 +136,7 @@ texture2D DepthBuffer : RENDERDEPTHSTENCILTARGET <
 >;
 
 // レンダリングターゲットのクリア値
-float4 ClearColor = {1,1,1,0};
+float4 ClearColor = {0.35,0.35,0.35,0};
 float ClearDepth  = 1.0;
 
 float2 ViewportSize : VIEWPORTPIXELSIZE;
@@ -212,14 +218,13 @@ float4 ps_expand(vs_out i) : COLOR0
 
 float4 ps_model(vs_out i) : COLOR0
 {	
-		
+	float4 g_color = SSS_Tone;
 	float4 g_texcoord_modifier = float4(0.50, -0.50, 0.50, 0.50);
 	float4 g_texel_size = float4(0.00313, 0.00556, 320.00, 180.00);
-	float4 g_color = float4(1.00, 0.96, 1.00, 0.00);
 	
 	//GaussianCoef
 	float4 g_param = float4(5.00, 0.00, 1.00, 1.00);
-	float4 g_coef[64] = {
+	float4 g_coef[36] = {
     float4(0.13436, 0.69615, 0.53141, 0.00),
     float4(0.10347, 0.07231, 0.09273, 0.00),
     float4(0.0528, 0.02162, 0.02528, 0.00),
@@ -255,35 +260,7 @@ float4 ps_model(vs_out i) : COLOR0
     float4(0.00918, 0.00006, 0.00208, 0.00),
     float4(0.00798, 0.00002, 0.00136, 0.00),
 	float4(0.00676, 3.19379E-06, 0.00074, 0.00),
-	float4(0.00566, 3.73915E-07, 0.00034, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-    float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00),
-	float4(0.00, 0.00, 0.00, 0.00)};
+	float4(0.00566, 3.73915E-07, 0.00034, 0.00)};
 	  
   float2 frg_texcoord = i.texcoord;
   float4 result;
@@ -387,14 +364,10 @@ float4 ps_aniso(vs_out i) : COLOR0
   float4 o0 = 0;
   
   float Pi = 6.28318530718; // Pi*2
-    
-    // GAUSSIAN BLUR SETTINGS {{{
-    float Directions = 12.0; // BLUR DIRECTIONS (Default 16.0 - More is better but slower)
-    float Quality = 4.0; // BLUR QUALITY (Default 4.0 - More is better but slower)
-    float Size = 8 * saturate(1-tex2D(DS, v1)/100); // BLUR SIZE (Radius)
-    // GAUSSIAN BLUR SETTINGS }}}
-   
-    float2 Radius = Size/ViewportSize.xy;
+  
+	float Quality = 4.0f; // Blur Quality (Default 4.0)
+    float Directions = 12.0f; // Blur Directions (Default 16.0)   
+    float2 Radius = (Size * saturate(1-tex2D(DS, v1)/100))/ViewportSize.xy;
     
     // Normalized pixel coordinates (from 0 to 1)
     float2 uv = v1.xy;
@@ -432,7 +405,7 @@ technique SSS < string MMDPass = "object";
             "ClearSetDepth=ClearDepth;"
             "Clear=Color;"
             "Clear=Depth;"
-		"Pass=Main;"
+		"Pass=Mainx2;"
 		
 		"RenderColorTarget0=g_aniso;"
 		    "RenderDepthStencilTarget=DepthBuffer;"
@@ -455,8 +428,7 @@ technique SSS < string MMDPass = "object";
 		"Pass=Screen;"
 	;
 > {
-	
-	pass Main < string Script= "Draw=Buffer;"; > {
+	pass Mainx2 < string Script= "Draw=Buffer;"; > {
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
 		VertexShader = compile vs_3_0 vs_model();
         PixelShader = compile ps_3_0 ps_model();

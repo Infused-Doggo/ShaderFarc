@@ -315,7 +315,7 @@ float4 ps_model(vs_out i) : COLOR0
     #else
         result.a = max(col0.a, g_max_alpha.w);
     #endif
-	return result;
+	return result * g_material;
 }
 //============================================================================//
 //  Technique(s)  : 

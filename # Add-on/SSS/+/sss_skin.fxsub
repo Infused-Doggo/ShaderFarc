@@ -221,7 +221,7 @@ float4 ps_model(vs_out i) : COLOR0
         #endif
         result.a = 0.01;
     } // #endif
-	return result;
+	return result * g_material;
 }
 //============================================================================//
 //  Technique(s)  : 

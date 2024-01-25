@@ -103,41 +103,7 @@ float4 g_foward_z_projection_row2 = float4(0.00, 0.00, -1.00002, -0.10);
 	
 //////////////////////////////////////////////////////////////////////////////////////////
 
-//float4 g_worlds[3] = {
-//    float4(1.00, 0.00, 0.00, 0.00),
-//    float4(0.00, 1.00, 0.00, 0.00),
-//    float4(0.00, 0.00, 1.00, 0.00)
-//};
 
-//float4 g_worlds_invtrans[3] = {
-//    float4(1.00, 0.00, 0.00, 0.00),
-//    float4(0.00, 1.00, 0.00, 0.00),
-//    float4(0.00, 0.00, 1.00, 0.00)
-//};
-
-//float4 g_worldview[3] = {
-//    float4(0.99779, -1.69966E-08, 0.06649, -0.19361),
-//    float4(0.00376, 0.9984, -0.0564, -1.19193),
-//    float4(-0.06638, 0.05653, 0.99619, -3.55057)
-//};
-
-//float4 g_worldview_inverse2[3] = {
-//    float4(0.99779, 0.00376, -0.06638, -0.03803),
-//    float4(-1.69966E-08, 0.9984, 0.05653, 1.39072),
-//    float4(0.06649, -0.0564, 0.99619, 3.4827)
-//};
-
-//float4 g_joint[3] = {
-//    float4(1.00, 0.00, 0.00, 0.00),
-//    float4(0.00, 1.00, 0.00, 0.00),
-//    float4(0.00, 0.00, 1.00, 0.00)
-//};
-
-//float4 g_joint_inverse[3] = {
-//    float4(1.00, 0.00, 0.00, 0.00),
-//    float4(0.00, 1.00, 0.00, 0.00),
-//    float4(0.00, 0.00, 1.00, 0.00)
-//};
 
 float4 g_texcoord_transforms[2] = {
 float4(1.00, 1.00, 1.00, 1.00),
@@ -163,9 +129,13 @@ float4 g_tex2D_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
 float4 g_texture_specular_coefficients = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_texture_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
                               //float4 g_shininess = float4(50.00, 0.00, 0.00, 0.00);
-float4 g_max_alpha = float4(0.00, 0.00, 0.99, 1.00);
+#if SHADER_TYPE == 3
+float4 g_max_alpha = float4(0.00, 0.00, 0.5, 1.00);
+#else
+float4 g_max_alpha = float4(0.00, 0.00, 0.5, 0.00);
+#endif
 float4 g_morph_weight = float4(0.31152, 0.68848, 0.00, 0.00);
-float4 g_sss_param = float4(0.60, 0.00, 0.00, 0.50);
+//float4 g_sss_param = float4(SSS_Intensity, 0.00, 0.00, 0.50);
 float4 g_bump_depth = float4(1.00, 1.00, 0.00, 0.00);
                               //float4 g_intensity = float4(0.00, 1.00, 0.00, 1.00);
 float4 g_reflect_uv_scale = float4(0.10, 0.10, 0.00, 0.00);
