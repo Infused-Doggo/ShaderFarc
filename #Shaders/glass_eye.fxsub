@@ -174,7 +174,7 @@ vs_out vs_model (vs_in i)
 
     float2 tex_eb = a_texcoord + g_tex_offset.xy;
     o.texcoord.xy = tex_eb;
-    o.texcoord.zw = a_texcoord + g_tex_offset.zw + normal_v.xy * float2(-0.1, 0.06);
+    o.texcoord.zw = a_texcoord + g_tex_offset.zw + normal_v.xy * float2(0.01, 0.06);
 
     if (SHADOW) { // #if SHADOW_DEF
         o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[1];
