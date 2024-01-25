@@ -370,6 +370,9 @@ float4 ps_model(vs_out i) : COLOR0
         }
         else if (ANISO_1) { // #elif ANISO_1_DEF
             frg_aniso_tangent = frg_tangent;
+        }
+		else {
+            frg_aniso_tangent = frg_binormal;
         } // #endif
 //============================================================================//
 	gl_FragCoord.xy = i.fragcoord;
@@ -435,7 +438,8 @@ float4 ps_model(vs_out i) : COLOR0
     tmp.xy = -tmp.xy * rsqrt(-tmp.xy);
     tmp.yz = clamp(tmp.xx * tmp.yy - tmp.zw, 0.0, 1.0);
 	if(SF_Valid){
-	tmp.xyz = tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb;}
+	tmp.xyz = tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb;
+	}
 	tmp.yz = pow(tmp.yz, g_shininess.xx);
 
     diff *= tmp.x * tmp.x * 0.25 + 0.75;
