@@ -111,9 +111,9 @@ sampler g_sss_s = sampler_state {
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = POINT;
-	ADDRESSU  = WRAP;
-	ADDRESSV  = WRAP;
-	ADDRESSW  = WRAP;
+	ADDRESSU  = CLAMP;
+	ADDRESSV  = CLAMP;
+	ADDRESSW  = CLAMP;
 };
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
@@ -332,7 +332,11 @@ float4 ps_model(vs_out i) : COLOR0
 
     float3 diff;
     //#if U16_DEF
-        float3 sss = tex2D(g_sss_s, gl_FragCoord.xy * g_framebuffer_size.xy).rgb;
+		float3 sss;
+		if(SF_Valid){
+		sss = tex2D(g_sss_s, gl_FragCoord.xy * g_framebuffer_size.xy).rgb;}
+		else {
+		sss = get_ibl_diffuse(g_ibl_diffuse_s, normal, lc) * float3(0.9, 0.8, 0.89) * g_light_env_chara_diffuse.rgb;}
         #if NPR_DEF
             diff = g_light_env_chara_diffuse.rgb;
             diff += frg_eye.w;
@@ -401,7 +405,7 @@ float4 ps_model(vs_out i) : COLOR0
     else { // #else
         result.rgb = apply_fog_color(diff, frg_fog_color);
     } // #endif
-	return result;
+	return result * g_material;
 }
 //============================================================================//
 //  Technique(s)  : 

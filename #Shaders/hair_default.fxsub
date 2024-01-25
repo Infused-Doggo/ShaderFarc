@@ -144,9 +144,9 @@ sampler g_aniso_s = sampler_state {
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = POINT;
-	ADDRESSU  = WRAP;
-	ADDRESSV  = WRAP;
-	ADDRESSW  = WRAP;
+	ADDRESSU  = CLAMP;
+	ADDRESSV  = CLAMP;
+	ADDRESSW  = CLAMP;
 };
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
@@ -340,7 +340,37 @@ float4 ps_model(vs_out i) : COLOR0
 	float4 frg_eye = i.eye; //xyz=eye, w=face_offset
 	float3 frg_tangent = Frame[0].xyz;
 	float3 frg_binormal = Frame[1].xyz;
-	float3 frg_aniso_tangent = i.aniso_tangent;
+	
+	float3 frg_aniso_tangent;
+	
+	if (ANISO_3) { // #if ANISO_3_DEF
+            float3 t_normal_w;
+			float3 tangent_w = frg_tangent;
+			float3 binormal_w = frg_binormal;
+            float2 aniso_tmp;
+            aniso_tmp.x = frg_binormal.x;
+            aniso_tmp.y = frg_tangent.y;
+            t_normal_w.x = frg_tangent.z;
+            t_normal_w.y = frg_binormal.z;
+            tangent_w.y = aniso_tmp.x;
+            tangent_w.z = frg_normal.x;
+            binormal_w.x = aniso_tmp.y;
+            binormal_w.z = frg_normal.y;
+            t_normal_w.z = frg_normal.z;
+
+            float3 aniso_tangent;
+            aniso_tangent.xy = frg_texcoord.xy * 2.0 - 1.0;
+            aniso_tangent.z = 0.01;
+            frg_aniso_tangent.x = dot(tangent_w, aniso_tangent);
+            frg_aniso_tangent.y = dot(binormal_w, aniso_tangent);
+            frg_aniso_tangent.z = dot(t_normal_w, aniso_tangent);
+        }
+        else if (ANISO_2) { // #elif ANISO_2_DEF
+            frg_aniso_tangent = frg_binormal;
+        }
+        else if (ANISO_1) { // #elif ANISO_1_DEF
+            frg_aniso_tangent = frg_tangent;
+        } // #endif
 //============================================================================//
 	gl_FragCoord.xy = i.fragcoord;
 	float4 result;
@@ -404,7 +434,8 @@ float4 ps_model(vs_out i) : COLOR0
 
     tmp.xy = -tmp.xy * rsqrt(-tmp.xy);
     tmp.yz = clamp(tmp.xx * tmp.yy - tmp.zw, 0.0, 1.0);
-	tmp.xyz = tex2D(g_aniso_s, gl_FragCoord.xy).rgb;
+	if(SF_Valid){
+	tmp.xyz = tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb;}
 	tmp.yz = pow(tmp.yz, g_shininess.xx);
 
     diff *= tmp.x * tmp.x * 0.25 + 0.75;
@@ -440,7 +471,7 @@ float4 ps_model(vs_out i) : COLOR0
     #else
         result.a = max(col0.a, g_max_alpha.w);
     #endif
-	return result;
+	return result * g_material;
 }
 //============================================================================//
 //  Technique(s)  : 

@@ -86,9 +86,9 @@ sampler g_sss_s = sampler_state {
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = POINT;
-	ADDRESSU  = WRAP;
-	ADDRESSV  = WRAP;
-	ADDRESSW  = WRAP;
+	ADDRESSU  = CLAMP;
+	ADDRESSV  = CLAMP;
+	ADDRESSW  = CLAMP;
 };
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
@@ -139,8 +139,8 @@ vs_out vs_model (vs_in i)
     vs_out o = (vs_out)0;
 // - - - - - - - - - - - - - - - - - - - - //
 	float3 a_position  = i.a_position;
-	float3 a_normal    = i.a_normal * float3(1, 1, -1);
-	float2 a_texcoord  = i.a_texcoord + float2(0, 1);
+	float3 a_normal    = inv(i.a_normal);
+	float2 a_texcoord  = i.a_texcoord + float2(0, Eyeball_Offset ? 1.0f : 0.0f);
 // - - - - - - - - - - - - - - - - - - - - //
     float4 pos_w;
     float3 normal_w;
@@ -198,7 +198,7 @@ vs_out vs_model (vs_in i)
 
     o.normal_spec = mul(normalize(pos_eb * 2.0 * g_eb_radius.xyz), (float3x3)g_worlds);
 
-    float3 eye_w = (g_view_position.xyz - pos_w.xyz) * float3(1, 1, -1);
+    float3 eye_w = inv(g_view_position.xyz - pos_w.xyz);
     o.eye.xyz = eye_w;
 
     eye_w = normalize(eye_w);
@@ -295,7 +295,7 @@ float4 ps_model(vs_out i) : COLOR0
         else { // #else
             result.rgb = apply_fog_color(diff, frg_fog_color);
         } // #endif
-        return result;
+        return result * g_material;
     }
 
     float4 pos_cornea1 = float4(frg_cornea_coord.zw, 0.0, 1.0);
@@ -339,13 +339,13 @@ float4 ps_model(vs_out i) : COLOR0
 
     if (_ftmp0.z < 1e-06) {
         result = float4(0.0, 0.0, 1.0, 1.0);
-        return result;
+        return result * g_material;
     }
 
     float4 pos_iris = float4(ray * tmp.x, 0.0) + pos_cornea1;
     if (pos_iris.z > 0.0) {
         result = float4(0.0, 1.0, 0.0, 1.0);
-        return result;
+        return result * g_material;
     }
 
     float len = abs(tmp.x);
@@ -458,7 +458,7 @@ float4 ps_model(vs_out i) : COLOR0
         else { // #else
             result.rgb = apply_fog_color(diff, frg_fog_color);
         } // #endif
-        return result;
+        return result * g_material;
     }
 
     len = abs(tmp.x);
@@ -480,7 +480,7 @@ float4 ps_model(vs_out i) : COLOR0
         else { // #else
             result.rgb = apply_fog_color(diff, frg_fog_color);
         } // #endif
-        return result;
+        return result * g_material;
     }
 
     cosine.y *= rsqrt(cosine.y);
@@ -510,7 +510,7 @@ float4 ps_model(vs_out i) : COLOR0
     else { // #else
         result.rgb = apply_fog_color(diff, frg_fog_color);
     } // #endif
-	return result;
+	return result * g_material;
 }
 //============================================================================//
 //  Technique(s)  : 
