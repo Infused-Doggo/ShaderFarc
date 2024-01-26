@@ -1,7 +1,7 @@
 # ShaderFarc (Work In Progress!)
 (ShaderFarc) Port of the graphics used in Project DIVA Arcade for MME.
 
-# ![1-0-5](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
+![1-0-5](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
 
 # Shaders Available:
 
