@@ -40,5 +40,5 @@ Korenkonder : Shaders n' code were used from [DivaGL](https://github.com/korenko
 
 Infu_D      : Project leader.
 
-Joshuawithj : For helping and advising in the development.
+Joshuawithj : For helping and promotional banner.
 
