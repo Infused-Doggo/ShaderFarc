@@ -139,14 +139,13 @@ sampler g_ibl_specular_shadowed_rough_s = sampler_state {
 //=== Custom ===//
 shared texture2D g_aniso : RENDERCOLORTARGET <
 	string Format = "A16B16G16R16F";>;
-sampler g_aniso_s = sampler_state {
+sampler2D g_aniso_s = sampler_state {
     Texture = <g_aniso>;
-    MINFILTER = LINEAR;
-    MAGFILTER = LINEAR;
-    MIPFILTER = POINT;
-	ADDRESSU  = CLAMP;
-	ADDRESSV  = CLAMP;
-	ADDRESSW  = CLAMP;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = LINEAR;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
 };
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
