@@ -1,40 +1,32 @@
-# ShaderFarc
-(ShaderFarc) Graphics Port from Project DIVA Arcade to MME.
+# ShaderFarc: Bringing Project DIVA Arcade Graphics Magic to MME
 
-![1-0-5](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
+![ShaderFarc Preview](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
 
-# Shaders Available:
- - ITEM
- - SKIN
- - CLOTH
- - TIGHTS
- - HAIR
- - EYEBALL
+Welcome to ShaderFarc, a shader dedicated to bring the visual graphics of Project DIVA Arcade into MME. Elevate your visuals with a collection of shaders tailored for various elements of your models.
 
-# - Additional
+## Shaders Available:
+- **ITEM**
+- **SKIN**
+- **CLOTH**
+- **TIGHTS**
+- **HAIR**
+- **EYEBALL**
 
-I also got a Ko-fi for anyone who's interested on supporting this project.
-https://ko-fi.com/infu_d
+## Additional Features:
+- Feel free to support this project through [Ko-fi](https://ko-fi.com/infu_d).
+- Check out the [usage guide](https://github.com/Infused-Doggo/ShaderFarc/wiki/How-To-Use:-(-ShaderFarc-)) to get started.
 
-How To Use:
+## Rules and Guidelines:
+- **Credit**: Please credit the shader if used in your content.
+- **Distribution**: You're allowed to distribute the shader with any model.
+- **Modification**: Limit redistribution without undergoing any modifications.
+- **Commercial Use**: Commercial use is not allowed (as long as it is not used as a business or charged for).
 
-## Rules:
-Blah blah.
-
-X Please credit the shader if you use it in your content.
-
-X Distribution of the shader with any model is allowed
-
-X Limit yourself from redistributing the shader(s) without undergoing any modifications.
-
-X Commercial use is not exactly allowed. (As long as it is not used as a business or charged for it everything is fine.)
+## How to Use:
+[Click here](https://github.com/Infused-Doggo/ShaderFarc/wiki/How-To-Use:-(-ShaderFarc-)) to find detailed instructions on using ShaderFarc in your projects.
 
 ## Credits:
-Sega AM2    : Devs of PDA and Graphics.
-
-Korenkonder : Shaders n' code were used from [DivaGL](https://github.com/korenkonder/DivaGL/tree/master).
-
-Infu_D      : Project leader.
-
-Joshuawithj : For helping and promotional banner.
-
+- **Sega AM2**: Developers of Project DIVA Arcade and the stunning graphics.
+- **Korenkonder**: Shaders and code were adapted from [DivaGL](https://github.com/korenkonder/DivaGL/tree/master).
+- **Infu_D**: The visionary project leader.
+- **Joshuawithj**: Special thanks for assistance and the promotional banner.
