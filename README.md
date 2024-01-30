@@ -1,26 +1,22 @@
-# ShaderFarc (Work In Progress!)
-(ShaderFarc) Port of the graphics used in Project DIVA Arcade for MME.
+# ShaderFarc
+(ShaderFarc) Graphics Port from Project DIVA Arcade to MME.
 
 ![1-0-5](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
 
 # Shaders Available:
-
- - CLOTH + ( NPR )
- - EYEBALL
- - SKIN + ( SSS )
- - HAIR + ( Aniso )
- - TIGHTS
  - ITEM
+ - SKIN + ( SSS )
+ - CLOTH + ( NPR )
+ - TIGHTS
+ - HAIR + ( Aniso )
+ - EYEBALL
 
 # - Additional
- - Hg Custom FX
-   
-More about to come...
 
 I also got a Ko-fi for anyone who's interested on supporting this project.
 https://ko-fi.com/infu_d
 
-I don't feel like documenting the whole thing rn...
+How To Use:
 
 ## Rules:
 Blah blah.
