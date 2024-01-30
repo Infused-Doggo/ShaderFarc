@@ -5,10 +5,10 @@
 
 # Shaders Available:
  - ITEM
- - SKIN + ( SSS )
- - CLOTH + ( NPR )
+ - SKIN
+ - CLOTH
  - TIGHTS
- - HAIR + ( Aniso )
+ - HAIR
  - EYEBALL
 
 # - Additional
