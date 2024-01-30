@@ -1,4 +1,4 @@
-# ShaderFarc: Bringing Project DIVA Arcade Graphics to MME
+# ShaderFarc: Bringing Project DIVA Graphics to MME
 
 ![ShaderFarc Preview](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
 
@@ -19,7 +19,7 @@ Welcome to ShaderFarc, a shader dedicated to bring the visual graphics of Projec
 ## Rules and Guidelines:
 - **Credit**: Please credit the shader if used in your content.
 - **Distribution**: You're allowed to distribute the shader with any model.
-- **Modification**: Limit redistribution without undergoing any modifications.
+- **Modification**: Limit from redistributing without undergoing any modifications.
 - **Commercial Use**: Commercial use is not allowed (as long as it is not used as a business or charged for).
 
 ## How to Use:
@@ -28,5 +28,5 @@ Welcome to ShaderFarc, a shader dedicated to bring the visual graphics of Projec
 ## Credits:
 - **Sega AM2**: Developers of Project DIVA Arcade and the stunning graphics.
 - **Korenkonder**: Shaders and code were adapted from [DivaGL](https://github.com/korenkonder/DivaGL/tree/master).
-- **Infu_D**: The visionary project leader.
+- **Infu_D**: Project leader.
 - **Joshuawithj**: Special thanks for assistance and the promotional banner.
