@@ -1,4 +1,4 @@
-# ShaderFarc: Bringing Project DIVA Arcade Graphics Magic to MME
+# ShaderFarc: Bringing Project DIVA Arcade Graphics to MME
 
 ![ShaderFarc Preview](https://cdn.discordapp.com/attachments/830105650403082331/1200535184647389315/Shader_Farc_Render_Release_1-0-5.png)
 
