@@ -7,6 +7,10 @@
 	float Intensity = 1;  // Aniso Intensity
 	//  More settings in "ps_aniso".
 	
+	// LUT:
+	float Lut_Intensity = 1.1;
+	#define TONE_MAP_SAT_GAMMA_SAMPLES 32
+	
 //==============================//
 float Script : STANDARDSGLOBAL <
 	string ScriptOutput = "color";
@@ -42,6 +46,11 @@ shared texture2D g_sss : RENDERCOLORTARGET <
 >;
 
 shared texture2D g_aniso : RENDERCOLORTARGET <
+	bool AntiAlias = true;
+	string Format = "A16B16G16R16F";
+>;
+
+shared texture2D g_tonemap : RENDERCOLORTARGET <
 	bool AntiAlias = true;
 	string Format = "A16B16G16R16F";
 >;
@@ -84,8 +93,23 @@ texture2D ANISO_SF : OFFSCREENRENDERTARGET
 	    //"self=hide;"
 	    "*=ANISO/V.fx;";
 >;
-sampler2D Aniso = sampler_state {
+
+sampler2D Expand_S = sampler_state {
     texture = <ANISO_SF>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = CLAMP;
+    ADDRESSV  = CLAMP;
+};
+
+texture2D g_expand : RENDERCOLORTARGET <
+	bool AntiAlias = true;
+	string Format = "A16B16G16R16F";
+>;
+
+sampler2D Aniso = sampler_state {
+    texture = <g_expand>;
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
@@ -123,6 +147,16 @@ float ClearDepth  = 1.0;
 float2 ViewportSize : VIEWPORTPIXELSIZE;
 static const float2 ViewportOffset = float2(0.5,0.5)/ViewportSize;
 #define cmp
+
+	float GammaA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Gamma +";>;
+	float GammaB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Gamma -";>;
+	float SaturationA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation +";>;
+	float SaturationB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation -";>;
+	float Saturation_Pow : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation_Pow";>;
+	
+	float set(float A, float B) {
+		return Lut_Intensity + (A * 2.5) * 1 - B;
+	}
 
 //============================================================================//
 //  Base Structure  :
@@ -164,6 +198,39 @@ vs_out vs_model (vs_in i)
 }
 //============================================================================//
 // Fragment Shader(s) :
+float4 ps_expand(vs_out i) : COLOR0
+{	
+  float4 r0 = 1;
+  float4 r1 = 1;
+  float4 r2 = 1;
+		
+  float2 v1 = i.o1;
+  float4 v2 = i.o3;
+  float4 v3 = i.o4;
+  float4 o0 = 0;
+  
+  r0.xyzw = tex2D(Expand_S, v1.xy).xyzw;
+  r1.x = cmp(r0.w == 1.000000);
+  if (r1.x != 0) {
+    o0.xyz = r0.xyz;
+    o0.w = 1;
+    return o0;
+  }
+  r1.xyzw = tex2D(Expand_S, v2.xy).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(Expand_S, v2.zw).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(Expand_S, v3.xy).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  r1.xyzw = tex2D(Expand_S, v3.zw).xyzw;
+  r2.x = cmp(r0.w < r1.w);
+  o0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  return o0;
+}
+
 float4 ps_model(vs_out i) : COLOR0
 {	
 	float4 g_color = SSS_Tone;
@@ -333,17 +400,54 @@ float4 ps_aniso(vs_out i) : COLOR0
     
     // Output to screen
     Color /= Quality * Directions;
-	  return pow(Color, 1/2.2)*Intensity;
+	  return pow(0.45, saturate(1 - Color)/2.2) * Intensity;
 }
 
 float4 ps_screen(vs_out i, float2 UV : TEXCOORD0) : COLOR0
 {	
   return tex2D(ScnSamp, UV).xyzw;
 }
+
+float4 ps_tonemap(vs_out i, float2 UV : TEXCOORD0) : COLOR0
+{	
+	static float gamma_rate = set(GammaA, GammaB);
+    static float saturate_coeff = set(SaturationA, SaturationB);
+	
+	const float tone_map_scale = (float)(UV.x / (double)TONE_MAP_SAT_GAMMA_SAMPLES);
+    const int tone_map_size = 16 * TONE_MAP_SAT_GAMMA_SAMPLES;
+	
+	int saturate_power = 1;
+	
+	float4 tex_data = 1;
+    float gamma_power = 1 * gamma_rate * 1.5f; // 2.2 = gamma
+	
+    for (int i = 1; i < tone_map_size; i++) {
+        float gamma = pow(1.0f - exp((float)-i * tone_map_scale), gamma_power);
+		float saturation = gamma * 2.0f - 1.0f;
+		float saturation2 = 1.0f;
+        for (int j = 0; j < saturate_power; j++) {
+            saturation2 *= saturation;
+            saturation2 *= saturation2;
+			saturation2 *= saturation2;
+			saturation2 *= saturation2;
+		}
+		tex_data.x = gamma;
+		tex_data.y = gamma * saturate_coeff * (1.0f - (Saturation_Pow > 0.5 ? saturation2 : saturation));
+	}
+	return tex_data;
+}
 //============================================================================//
 //  Technique(s)  : 
 technique SSS <
 	string Script = 
+		"RenderColorTarget0=g_expand;"
+		"RenderDepthStencilTarget=DepthBuffer;"
+        "ClearSetColor=ClearColor;"
+        "ClearSetDepth=ClearDepth;"
+        "Clear=Color;"
+        "Clear=Depth;"
+		"Pass=Expand;"
+		
 		"RenderColorTarget0=g_sss;"
 		"RenderDepthStencilTarget=DepthBuffer;"
         "ClearSetColor=ClearColor;"
@@ -359,6 +463,14 @@ technique SSS <
         "Clear=Color;"
         "Clear=Depth;"
 		"Pass=Aniso;"
+		
+		"RenderColorTarget0=g_tonemap;"
+		"RenderDepthStencilTarget=DepthBuffer;"
+        "ClearSetColor=ClearColor;"
+        "ClearSetDepth=ClearDepth;"
+        "Clear=Color;"
+        "Clear=Depth;"
+		"Pass=Ramp;"
 
 		"RenderColorTarget0=ScnMap;"
         "RenderDepthStencilTarget=DepthBuffer;"
@@ -372,6 +484,11 @@ technique SSS <
         "Pass=Screen;"
 	;
 > {
+	pass Expand < string Script= "Draw=Buffer;"; > {
+		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
+		VertexShader = compile vs_3_0 vs_model();
+        PixelShader = compile ps_3_0 ps_expand();
+	}
 	pass Main < string Script= "Draw=Buffer;"; > {
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
 		VertexShader = compile vs_3_0 vs_model();
@@ -381,6 +498,11 @@ technique SSS <
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
 		VertexShader = compile vs_3_0 vs_model();
         PixelShader = compile ps_3_0 ps_aniso();
+	}
+	pass Ramp < string Script= "Draw=Buffer;"; > {
+		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;
+		VertexShader = compile vs_3_0 vs_model();
+        PixelShader = compile ps_3_0 ps_tonemap();
 	}
 	pass Screen < string Script= "Draw=Buffer;"; > {
 		AlphaBlendEnable = FALSE;	AlphaTestEnable = FALSE;

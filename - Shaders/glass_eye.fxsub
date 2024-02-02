@@ -284,7 +284,7 @@ float4 ps_model(vs_out i) : COLOR0
         float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, ray).rgb;
 
         ibl_spec = lerp(ibl_spec_shad, ibl_spec, lc);
-        ibl_spec *= g_light_env_chara_specular.rgb;
+        ibl_spec *= g_light_env_chara_specular.rgb * 0.5;
 
         diff = lerp(ibl_spec, diff, 0.94);
         diff += col2;

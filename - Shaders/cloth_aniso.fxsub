@@ -1,5 +1,5 @@
 //============================================================================//
-//Shader "cloth_npr1"
+//Shader "cloth_aniso"
 //============================================================================//
 // - - - - - - - - - - -
 #include "- Shaders/#Include/common.fxh"
@@ -54,6 +54,88 @@ sampler2D g_transparency_s = sampler_state {
     ADDRESSV  = WRAP;
 	ADDRESSW  = WRAP;
 };
+//=== Environment ===//
+textureCUBE g_envmap <string ResourceName = _Env_Map;>;
+sampler g_envmap_s = sampler_state {
+    Texture = <g_envmap>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== IBL Diffuse ===//
+textureCUBE g_ibl_diffuse <string ResourceName = _IBL;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_diffuse_s = sampler_state {
+    Texture = <g_ibl_diffuse>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = POINT;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== IBL Specular ===//
+textureCUBE g_ibl_specular <string ResourceName = _IBL1;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_specular_s = sampler_state {
+    Texture = <g_ibl_specular>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== IBL Specular Rough ===//
+textureCUBE g_ibl_specular_rough <string ResourceName = _IBL2;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_specular_rough_s = sampler_state {
+    Texture = <g_ibl_specular_rough>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== IBL Specular Shadowed ===//
+textureCUBE g_ibl_specular_shadowed <string ResourceName = _IBL3;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_specular_shadowed_s = sampler_state {
+    Texture = <g_ibl_specular_shadowed>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== IBL Specular Shadowed Rough ===//
+textureCUBE g_ibl_specular_shadowed_rough <string ResourceName = _IBL4;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_specular_shadowed_rough_s = sampler_state {
+    Texture = <g_ibl_specular_shadowed_rough>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== Custom ===//
+shared texture2D g_aniso : RENDERCOLORTARGET <
+	string Format = "A16B16G16R16F";>;
+sampler2D g_aniso_s = sampler_state {
+    Texture = <g_aniso>;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = LINEAR;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+};
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
 sampler2D g_shadow_depth0_s = sampler_state {
@@ -89,6 +171,7 @@ struct vs_in
 struct vs_out
 {
 	float4 position         : SV_POSITION;
+	float3 vertcoord        : TEXCOORD8;
 	float2 fragcoord        : TEXCOORD9;
 	float4 fog_color        : TEXCOORD3; //xyz=fog_color, w=fog
 	float4 texcoord         : TEXCOORD0; //xy=texcoord0, zw=texcoord1
@@ -105,7 +188,7 @@ vs_out vs_model (vs_in i)
     vs_out o = (vs_out)0;
 // - - - - - - - - - - - - - - - - - - - - //
 	float3 a_position  = i.a_position;
-	float3 a_normal    = i.a_normal;
+	float3 a_normal    = inv(i.a_normal);
 	float4 a_tangent   = i.a_tangent;
 	float2 a_texcoord0 = i.a_texcoord0;
 	float2 a_texcoord1 = i.a_texcoord0;
@@ -126,15 +209,17 @@ vs_out vs_model (vs_in i)
         normal_v = normal_w * mat3(g_worldview);
         pos_c = pos_w * g_transforms;
     #else
-        pos_w.xyz = (mul(float4(a_position.xyz, 1.0), (float4x4)g_worlds)).xyz;
+        pos_w.xyz = mul(float4(a_position, 1.0), (float4x4)g_worlds).xyz;
         pos_w.w = 1.0;
         normal_w = mul(a_normal, (float3x3)g_worlds);
         tangent_w = mul(a_tangent.xyz, (float3x3)g_worlds);
 
         normal_v = mul(a_normal, (float3x3)g_worldview);
-        pos_c = mul(float4(a_position.xyz, 1.0), g_transforms);
+        pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
     o.position = pos_c;
+	
+	o.vertcoord = pos_w.xyz;
 	
 	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
     1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
@@ -149,13 +234,13 @@ vs_out vs_model (vs_in i)
         o.tangent = (0.0);
         o.binormal = (0.0);
     } // #endif
-    
-	float4 texcoord0 = float4(a_texcoord0, 0.0, 1.0);
+
+    float4 texcoord0 = float4(a_texcoord0, 0.0, 1.0);
     float4 texcoord1 = float4(a_texcoord1, 0.0, 1.0);
     o.texcoord.xy = texcoord0 * g_texcoord_transforms[0];
     o.texcoord.zw = texcoord1 * g_texcoord_transforms[1];
 
-	if (SHADOW) { // #if SHADOW_DEF
+    if (SHADOW) { // #if SHADOW_DEF
         o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[1];
     }
     else { // #else
@@ -163,7 +248,7 @@ vs_out vs_model (vs_in i)
     } // #endif
 
     float4 eye_w;
-    eye_w.xyz = g_view_position.xyz - pos_w.xyz;
+    eye_w.xyz = inv(g_view_position.xyz - pos_w.xyz);
     o.eye.xyz = eye_w.xyz;
 
     eye_w.xyz = normalize(eye_w.xyz);
@@ -197,7 +282,7 @@ vs_out vs_model (vs_in i)
         o.fog_color.rgb = g_fog_depth_color.rgb;
     }
     else { // #else
-        o.fog_color = 0.0;
+        o.fog_color = (0.0);
     } // #endif
 	return o;
 }
@@ -205,104 +290,155 @@ vs_out vs_model (vs_in i)
 // Fragment Shader(s) :
 float4 ps_model(vs_out i) : COLOR0
 {
+	float4x4 Frame = CTF(i.vertcoord, i.normal, i.texcoord);
 	float4 frg_fog_color = i.fog_color; //xyz=fog_color, w=fog
 	float4 frg_texcoord = i.texcoord; //xy=texcoord0, zw=texcoord1
 	float3 frg_texcoord_shadow0 = i.texcoord_shadow0;
-	float3 frg_tangent = i.tangent;
-	float3 frg_binormal = i.binormal;
-	float4 frg_normal = i.normal; //xyz=normal, w=fresnel
+	float3 frg_tangent = Frame[0].xyz;
+	float3 frg_binormal = Frame[1].xyz;
+	float4 frg_normal = Frame[2]; //xyz=normal, w=fresnel
 	float4 frg_eye = i.eye; //xyz=eye, w=face_offset
 //============================================================================//
 	gl_FragCoord.xy = i.fragcoord;
 	float4 result;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+    float4 col0 = tex2D(g_diffuse_s, frg_texcoord.xy);
+    col0.rgb *= g_texture_color_coefficients.x;
+
+    float4 tmp;
+    if (TRANSPARENCY) { // #if TRANSPARENCY_DEF
+        tmp = tex2D(g_transparency_s, frg_texcoord.zw);
+        col0.a = tmp.a;
+    } // #endif
+
+    #if ALPHA_TEST_DEF
+        if (col0.a < min(g_max_alpha.z, 0.5))
+            discard;
+
+        result.a = g_max_alpha.z < 0.5 ? max(col0.a, g_max_alpha.w) : 1.0;
+    #else
+        result.a = max(col0.a, g_max_alpha.w);
+    #endif
+
+    tmp.xy = tex2D(g_normal_s, frg_texcoord.xy).xy * 2.0 - 1.0;
+    tmp.zw = tmp.xy * tmp.xy * tmp.xy;
+    tmp *= float4(1.5, 1.5, 2.0, 2.0);
+    tmp.xy += tmp.w;
+
+    float3 normal = frg_normal.xyz;
+    normal += frg_tangent * tmp.x;
+    normal += frg_binormal * tmp.y;
+    normal = normalize(normal);
+
+    float3 eye = normalize(frg_eye.xyz);
+    float3 tangent = normalize(frg_tangent);
+
+    float3 org_normal = normal;
+    float3 org_eye = eye;
+    float3 org_tangent = tangent;
+
+    normal = mul(org_normal, (float3x3)g_normal_tangent_transforms);
+    eye = mul(org_eye, (float3x3)g_normal_tangent_transforms);
+	if(SF_Valid) {
+	tangent = mul(org_tangent, (float3x3)g_normal_tangent_transforms);
+	tangent = lerp(tangent, tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb, saturate(dot(eye, frg_normal)));
+	} else {
+    tangent = mul(org_tangent, (float3x3)g_normal_tangent_transforms);
+	}
+
+    float2 lc;
     //#if U16_DEF
-        float4 col0 = tex2D(g_diffuse_s, frg_texcoord.xy);
-
-        float4 tmp;
-        if (TRANSPARENCY) { // #if TRANSPARENCY_DEF
-            tmp = tex2D(g_transparency_s, frg_texcoord.zw);
-            col0.a = tmp.a;
-        } // #endif
-
-        #if ALPHA_TEST_DEF
-            if (col0.a < min(g_max_alpha.z, 0.5))
-                discard;
-
-            result.a = g_max_alpha.z < 0.5 ? max(col0.a, g_max_alpha.w) : 1.0;
-        #else
-            result.a = max(col0.a, g_max_alpha.w);
-        #endif
-
-        float3 normal;
-        if (NORMAL) { // #if NORMAL_DEF
-            tmp.xy = tex2D(g_normal_s, frg_texcoord.xy).xy * 2.0 - 1.0;
-
-            normal = frg_normal.xyz;
-            normal += frg_tangent * tmp.x;
-            normal += frg_binormal * tmp.y;
-            normal = normalize(normal);
-        }
-        else { // #else
-            normal = normalize(frg_normal.xyz);
-        } // #endif
-
-        float lc;
         if (SELF_SHADOW) { // #if SELF_SHADOW_DEF
-            lc = get_chara_shadow(g_shadow_depth0_s, normal, frg_texcoord_shadow0).y;
+            lc = get_chara_shadow(g_shadow_depth0_s, org_normal, frg_texcoord_shadow0);
         }
         else { // #else
-            lc = 1.0;
-        } // #endif
-
-        float3 ybr;
-        ybr.x = dot(col0.rgb, _cr_coef_601.rgb);
-        ybr.y = dot(col0.rgb, _y_coef_601.rgb);
-        ybr.z = dot(col0.rgb, _cb_coef_601.rgb);
-        tmp.x = dot(ybr.xz, ybr.xz) + 1e-06;
-        tmp.x = clamp(0.12 - tmp.x * rsqrt(tmp.x), 0.0, 1.0);
-
-        float3 ybr_tmp;
-        ybr_tmp.z = tmp.x * 0.5 + ybr.z;
-        ybr_tmp.xy = ybr.xy;
-        ybr_tmp = ybr_tmp * float3(1.2, 0.8, 1.2) + float3(0.0, -0.15, 0.01);
-        ybr_tmp.y = max(ybr_tmp.y, 0.1);
-        ybr_tmp.z = max(ybr_tmp.z, ybr_tmp.z * 0.4 + 0.04);
-
-        float3 diff;
-        diff.r = dot(ybr_tmp, _red_coef_601.xyz);
-        diff.g = dot(ybr_tmp, _grn_coef_601.xyz);
-        diff.b = dot(ybr_tmp, _blu_coef_601.xyz);
-        diff = clamp(diff, (0.0), (1.0));
-
-        tmp.xz = pow(abs(ybr.xz * 2.0), (0.85)) * sign(ybr.xz) * 0.5;
-        tmp.y = pow(1.0 - ybr.y, 1.5) * -0.97 + 1.0;
-        col0.r = dot(tmp.xyz, _red_coef_601.xyz);
-        col0.g = dot(tmp.xyz, _grn_coef_601.xyz);
-        col0.b = dot(tmp.xyz, _blu_coef_601.xyz);
-        col0.rgb = clamp(col0.rgb, (0.0), (1.0));
-
-        diff = lerp(diff, col0.rgb, pow(clamp(dot(normal, g_light_chara_dir.xyz), 0.0, 1.0), 0.3) * lc);
-
-        diff *= g_light_env_chara_diffuse.rgb;
-        diff += frg_eye.w;
-        diff += g_light_env_chara_ambient.rgb;
-
-        if (SPECULAR) { // #if SPECULAR_DEF
-            float3 eye = normalize(frg_eye.xyz);
-            float4 spec = tex2Dlod(g_specular_s, float4(frg_texcoord.xy, 0, 3.0));
-            spec.x = clamp((max(max(spec.r, spec.g), spec.b) - 0.033) * 8.0, 0.0, 1.0);
-            tmp.xyz = normalize(normalize(float3(-1.0, 1.0, -0.5)) + eye);
-            spec.x = clamp(pow(0.05 + abs(dot(tmp.xyz, normal)), 1000.0), 0.0, 1.0);
-            spec.x *= max(lc * 1.2 - 0.5, 0.05);
-            result.rgb = lerp(diff, g_npr_cloth_spec_color.rgb, spec.x * g_npr_cloth_spec_color.a);
-        }
-        else { // #else
-            result.rgb = diff;
+            lc = (1.0);
         } // #endif
     //#else
-    //    result = float4(1.0, 0.0, 0.0, 1.0);
+    //    lc = (1.0);
     //#endif
+
+    tangent = normalize(tangent - normal * dot(tangent, normal));
+    tmp.y = dot(tangent, eye);
+
+    float3 reflect_vec = tangent * tmp.y * 2.0 + eye;
+    tmp.y = -tmp.y * tmp.y + 1.00001;
+    tmp.y *= rsqrt(tmp.y);
+
+    tmp.x = dot(tangent.xyz, -eye) * 0.9 + 0.1;
+    tmp.x *= tmp.x;
+    tmp.x *= tmp.x;
+    tmp.x *= g_fresnel_coefficients.x;
+
+    float4 spec_ratio = g_material_state_specular;
+
+    if (SPECULAR) { // #if SPECULAR_DEF
+        spec_ratio *= tex2D(g_specular_s, frg_texcoord.xy);
+    } // #endif
+
+    spec_ratio.rgb *= tmp.x + g_fresnel_coefficients.y;
+    spec_ratio.a *= tmp.x * 2.0 + 1.0;
+
+    tmp.x = clamp(dot(normal, eye), 0.0, 1.0);
+    tmp.x = tmp.x * -tmp.x + 1.0;
+    tmp.x *= tmp.x;
+    tmp.x *= tmp.x;
+    tmp.x *= (lc.x * 0.6 + 0.4) * g_fresnel_coefficients.z * tmp.y;
+    tmp.w = tmp.y;
+
+    float3 luce = texCUBE(g_ibl_diffuse_s, -eye).rgb * tmp.x;
+
+    float3 diff = get_ibl_diffuse(g_ibl_diffuse_s, normal, lc.y);
+
+    diff *= g_light_env_chara_diffuse.rgb;
+    diff += frg_eye.w;
+    diff += g_light_env_chara_ambient.rgb;
+
+    diff += luce * 0.5;
+
+    if (TONE_CURVE) { // #if TONE_CURVE_DEF
+        diff.rgb += get_tone_curve(org_normal);
+    } // #endif
+
+    if (ANISO_3) { // #if ANISO_3_DEF
+        tmp.w = tmp.w * 0.7 + 0.3;
+    }
+    else if (ANISO_2) { // #elif ANISO_2_DEF
+        tmp.w = tmp.w * 0.6 + 0.4;
+    }
+    else if (ANISO_1) { // #elif ANISO_1_DEF
+        tmp.w = tmp.w * 0.8 + 0.2;
+    }
+
+    diff.rgb *= lerp(g_material_state_ambient.rgb, col0.rgb, tmp.w);
+
+    float3 ibl_spec = texCUBE(g_ibl_specular_s, reflect_vec).rgb;
+    float3 ibl_spec_rough = texCUBE(g_ibl_specular_rough_s, reflect_vec).rgb;
+    float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, reflect_vec).rgb;
+    float3 ibl_spec_shad_rough = texCUBE(g_ibl_specular_shadowed_rough_s, reflect_vec).rgb;
+    ibl_spec = lerp(ibl_spec_rough, ibl_spec, g_material_state_shininess.x);
+    ibl_spec_shad = lerp(ibl_spec_shad_rough, ibl_spec_shad, g_material_state_shininess.x);
+
+    ibl_spec = lerp(ibl_spec_shad, ibl_spec, lc.y);
+    ibl_spec *= g_light_env_chara_specular.rgb;
+
+    diff *= 0.96;
+    diff += ibl_spec * (spec_ratio.rgb + g_texture_color_coefficients.w);
+
+    if (ENV_MAP) { // #if ENV_MAP_DEF
+        float3 env = texCUBE(g_envmap_s, reflect_vec).rgb;
+        env *= lc.y * 0.5 + 0.5;
+        diff += env * spec_ratio.a;
+    } // #endif
+
+    diff += luce * 0.5;
+
+    if (CHARA_COLOR) { // #if CHARA_COLOR_DEF
+        result.rgb = apply_chara_color(diff);
+    } // #endif
+    else { // #else
+        result.rgb = apply_fog_color(diff, frg_fog_color);
+    } // #endif
 	return result * g_material;
 }
 //============================================================================//

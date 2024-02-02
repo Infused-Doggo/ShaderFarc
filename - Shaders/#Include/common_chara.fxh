@@ -29,7 +29,7 @@ float SaturationB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string
 
 // floats!
 static float exposure = set(ExposureA, ExposureB);
-float exposure_rate = 2.0f;
+float exposure_rate = 2.5f;
 float auto_exposure = 0; // Excluded
 
 static float4 g_exposure = float4(exposure * exposure_rate, 0.0625f, exposure * exposure_rate * 0.5f, auto_exposure ? 1.0f : 0.0f);
@@ -38,9 +38,21 @@ static float4 g_tone_scale = float4(set(R_ScaleA, R_ScaleB), set(G_ScaleA, G_Sca
 static float4 g_tone_offset = float4(set2(R_OffsetA, R_OffsetB), set2(G_OffsetA, G_OffsetB), set2(B_OffsetA, B_OffsetB), 0.66667);
 
 #define _ramp "- Shaders/#Include/Tonemap.dds"
-texture2D RampTex <string ResourceName = _ramp;>;
-sampler2D g_tone_map = sampler_state {
+texture2D RampTex <string ResourceName = _ramp;
+	string Format = "A16B16G16R16F";>;
+sampler2D g_ramp_s = sampler_state {
 	texture = <RampTex>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = CLAMP;
+    ADDRESSV  = CLAMP;
+};
+
+shared texture2D g_tonemap : RENDERCOLORTARGET <
+	string Format = "A16B16G16R16F";>;
+sampler2D g_tonemap_s = sampler_state {
+	texture = <g_tonemap>;
     MINFILTER = LINEAR;
     MAGFILTER = LINEAR;
     MIPFILTER = LINEAR;
@@ -63,7 +75,11 @@ float3 apply_tonemap(float3 color) {
   r0.xz = r0.xz + -r0.yy;
   r1.x = v3.y * r0.y;
   r1.y = 0;
-  r1.xy = tex2Dlod(g_tone_map, float4(r1.xy, 0, 0)).yx;
+  if(SF_Valid) {
+  r1.xy = tex2Dlod(g_tonemap_s, float4(r1.xy, 0, 0)).yx;
+  } else {
+  r1.xy = tex2Dlod(g_ramp_s, float4(r1.xy, 0, 0)).yx;
+  }
   r0.y = v3.x * r1.x;
   r1.xz = r0.yy * r0.xz;
   r0.xz = r0.yy * r0.xz + r1.yy;

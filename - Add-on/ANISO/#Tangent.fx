@@ -50,33 +50,99 @@ sampler ObjTexSampler = sampler_state
     ADDRESSV  = WRAP;
 };
 
-#if Use_Normal_Map == 1 
-texture Normal_T <string ResourceName = Normal_Map;>;
-#else
-texture Normal_T;
-#endif
-sampler Normal_S = sampler_state {
-    texture = <Normal_T>;
-    MINFILTER = ANISOTROPIC;
-    MAGFILTER = ANISOTROPIC;
-    MIPFILTER = ANISOTROPIC;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
-	ADDRESSW  = WRAP;
-	MAXANISOTROPY = 16;
-};
+#define Controller "#ShaderFarc_Controller.pmx"
+#define IBLDirection "IBL Direction"
+float4x4 IBL_Controller : CONTROLOBJECT < string name = Controller; string item = IBLDirection ; >;
+static float3 IBL_Dir = IBL_Controller._31_32_33;
+
+float3x3 Rotation(float3 in_axis, float s, float c)
+{	
+	float3x3 in_m1;
+    float c_1 = 1.0f - c;
+    float3 axis = normalize(in_axis);
+    float3 axis_s = axis * s;
+
+    float3 temp;
+    temp = axis * axis.x * c_1;
+    in_m1[0].x = temp.x + c;
+    in_m1[1].x = temp.y - axis_s.z;
+    in_m1[2].x = temp.z + axis_s.y;
+    temp = axis * axis.y * c_1;
+    in_m1[0].y = temp.x + axis_s.z;
+    in_m1[1].y = temp.y + c;
+    in_m1[2].y = temp.z - axis_s.x;
+    temp = axis * axis.z * c_1;
+    in_m1[0].z = temp.x - axis_s.y;
+    in_m1[1].z = temp.y + axis_s.x;
+    in_m1[2].z = temp.z + c;
+	return in_m1;
+}
+
+float3x3 NormalTransform(float3 Light_Direction, float3 IBL_dir)
+{	
+	float3x3 CUBETransform;;
+	float leng = length(IBL_dir.xyz);
+    if (leng >= 0.00000f) {
+        float3 ibl_direction = IBL_dir.xyz * (1.0f / leng);
+
+		float3 ibl_position = Light_Direction * float3(1, 1, -1);
+        leng = length(ibl_position.xyz);
+        if (leng >= 0.00000f) {
+            float3 position = ibl_position * (1.0f / leng);
+		
+			float3 axis = cross(ibl_direction, position);
+            leng = length(axis.xyz);
+
+            float v52 = dot(ibl_direction, position);
+            float angle = abs(atan2(leng, v52));
+			
+			if (angle >= 0.00000f && angle <= 3.131592653589793f) {
+                if (leng != 0.0f)
+                    axis *= 1.0f / leng;
+				
+			CUBETransform = Rotation(axis, sin(-angle), cos(-angle));
+	
+	float3 RotationAngles = radians(float3(-45, -45, 0));
+	float3x3 rotationX = {
+    1, 0, 0,
+    0, cos(RotationAngles.x), sin(RotationAngles.x),
+    0, -sin(RotationAngles.x), cos(RotationAngles.x)};
+
+	float3x3 rotationY = {
+    cos(RotationAngles.y), 0, -sin(RotationAngles.y),
+    0, 1, 0,
+    sin(RotationAngles.y), 0, cos(RotationAngles.y)};
+
+	float3x3 rotationZ = {
+    cos(RotationAngles.z), sin(RotationAngles.z), 0,
+    -sin(RotationAngles.z), cos(RotationAngles.z), 0,
+    0, 0, 1};
+
+	CUBETransform = mul(CUBETransform, rotationX);
+	CUBETransform = mul(CUBETransform, rotationY);
+	CUBETransform = mul(CUBETransform, rotationZ);
+	
+	float3x3 Scale = {
+	1.00, 0.00, 0.00,
+	0.00, 1.00, 0.00,
+	0.00, 0.00, 1.00};
+	
+	CUBETransform = mul(CUBETransform, Scale);	} } }
+	return CUBETransform;
+}
+
+static float3x3 g_normal_tangent_transforms = NormalTransform(LightDirection, -IBL_Dir);
 
 float4x4 CTF(float3 frg_position, float3 frg_normal, float2 frg_texcoord) {
 	float4x4 Out;
-	frg_position = frg_position * float3(1, 1, 1);
+	frg_position = frg_position * float3(1, 1, -1);
 	float3 p_dx = ddx(frg_position.xyz);
 	float3 p_dy = ddy(frg_position.xyz);
 	float2 tc_dx = ddx(frg_texcoord.xy);
 	float2 tc_dy = ddy(frg_texcoord.xy);
-	float direction = tc_dx.x * tc_dy.y - tc_dx.y * tc_dy.x > 0.0f ? 1.0f : -1.0f;
-	float3 t = normalize( (tc_dy.y * p_dx - tc_dx.y * p_dy) * direction );
-	float3 b = normalize( (tc_dy.x * p_dx - tc_dx.x * p_dy) * direction );
-	float3 n = normalize(frg_normal);
+	float3 t = normalize( tc_dy.y * p_dx - tc_dx.y * p_dy );
+	float3 b = normalize( tc_dy.x * p_dx - tc_dx.x * p_dy );
+	float3 n = normalize(frg_normal * float3(1, 1, -1));
 	float3 x = cross(n, t);
 	t = cross(x, n);
 	t = normalize(t);
@@ -149,84 +215,9 @@ float4 Basic_PS( VS_OUTPUT IN ) : COLOR0
 	float3 frg_normal = Frame[2].xyz;
 	float3 frg_eye = normalize(IN.Eye);
 	float3 frg_tangent = Frame[0].xyz;
-	float3 frg_binormal = Frame[1].xyz;
-	float3 frg_aniso_tangent;
+	float3 frg_binormal = Frame[1].xyz;	
 	
-	#if Aniso_Direction == 0
-		#define ANISO_1 1
-	#else
-		#define ANISO_1 0
-	#endif
-
-	#if Aniso_Direction == 1
-		#define ANISO_2 1
-	#else
-		#define ANISO_2 0
-	#endif
-
-	#if Aniso_Direction == 2
-		#define ANISO_3 1
-	#else
-		#define ANISO_3 0
-	#endif
-	
-		if (ANISO_3) { // #if ANISO_3_DEF
-            float3 t_normal_w;
-			float3 tangent_w = frg_tangent;
-			float3 binormal_w = frg_binormal;
-            float2 aniso_tmp;
-            aniso_tmp.x = frg_binormal.x;
-            aniso_tmp.y = frg_tangent.y;
-            t_normal_w.x = frg_tangent.z;
-            t_normal_w.y = frg_binormal.z;
-            tangent_w.y = aniso_tmp.x;
-            tangent_w.z = frg_normal.x;
-            binormal_w.x = aniso_tmp.y;
-            binormal_w.z = frg_normal.y;
-            t_normal_w.z = frg_normal.z;
-
-            float3 aniso_tangent;
-            aniso_tangent.xy = frg_texcoord.xy * 2.0 - 1.0;
-            aniso_tangent.z = 0.01;
-            frg_aniso_tangent.x = dot(tangent_w, aniso_tangent);
-            frg_aniso_tangent.y = dot(binormal_w, aniso_tangent);
-            frg_aniso_tangent.z = dot(t_normal_w, aniso_tangent);
-        }
-        else if (ANISO_2) { // #elif ANISO_2_DEF
-            frg_aniso_tangent = frg_binormal;
-        }
-        else if (ANISO_1) { // #elif ANISO_1_DEF
-            frg_aniso_tangent = frg_tangent;
-        } // #endif
-	
-	float4 tmp;
-	float3 normal;
-	#if Use_Normal_Map
-	tmp.xy = tex2D(Normal_S, frg_texcoord.xy).xy * 2.0 - 1.0;
-    tmp.zw = tmp.xy * tmp.xy * tmp.xy;
-    tmp *= float4(NM_Intensity, Flip_Y ? -NM_Intensity : NM_Intensity, 2.0, 2.0);
-    tmp.xy += tmp.w;
-
-    normal = frg_normal.xyz;
-    normal += frg_tangent * tmp.x;
-    normal += frg_binormal * tmp.y;
-    normal = normalize(normal);
-	#else
-	normal = IN.Normal;
-	#endif
-	
-    float3 aniso_tangent = normalize(frg_aniso_tangent);
-    aniso_tangent = normalize(aniso_tangent - dot(aniso_tangent, normal) * normal);
-	
-    tmp.x = dot(aniso_tangent, -LightDirection.xyz);
-    tmp.y = dot(aniso_tangent, frg_eye);
-    tmp.z = -tmp.x;
-    tmp.xyzw = tmp.xyxz * tmp.xyyy + float4(-1.01, -1.01, 0.0, 0.0);
-
-    tmp.xy = -tmp.xy * rsqrt(-tmp.xy);
-    tmp.yz = clamp(tmp.xx * tmp.yy - tmp.zw, 0.0, 1.0);
-	
-    Color.rgb = tmp.xyz;
+    Color.rgb = mul(frg_tangent, (float3x3)g_normal_tangent_transforms);
     return Color;
 }
 

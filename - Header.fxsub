@@ -335,7 +335,7 @@ float2 gl_FragCoord;
 	#if NPR
 		#include "- Shaders/cloth_npr1.fxsub"
 	#elif ANISO == 1
-		//#include "- Shaders/cloth_aniso.fxsub"
+		#include "- Shaders/cloth_aniso.fxsub"
 	#else
 		#include "- Shaders/cloth_default.fxsub"
 	#endif
