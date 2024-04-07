@@ -3,7 +3,7 @@
 //============================================================================//
 // - - - - - - - - - - -
 #include "- Shaders/#Include/common.fxh"
-//#include "- Shaders/#Include/common_scene.fxh"
+#include "- Shaders/#Include/common_scene.fxh"
 #include "- Shaders/#Include/common_chara.fxh"
 // - - - - - - - - - - -
 //  Textures / Samplers  :
@@ -123,6 +123,7 @@ struct vs_in
 struct vs_out
 {
 	float4 position         : SV_POSITION;
+	float3 vertcoord        : TEXCOORD8;
 	float2 fragcoord        : TEXCOORD9;
 	float4 fog_color        : TEXCOORD3; //xyz=fog_color, w=fog
 	float4 texcoord         : TEXCOORD0; //xy=texcoord0, zw=texcoord1
@@ -165,6 +166,8 @@ vs_out vs_model (vs_in i)
     #endif
 
     o.position = pos_c;
+	
+	o.vertcoord = pos_w.xyz;
 	
 	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
     1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
@@ -239,6 +242,9 @@ float4 ps_model(vs_out i) : COLOR0
 //============================================================================//
 	gl_FragCoord.xy = i.fragcoord;
 	float4 result;
+	
+	g_joint = inverse(EyeJointController);
+	g_joint_inverse = (EyeJointController);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 	result = float4(1.0, 0.0, 0.0, 1.0);
 
@@ -270,11 +276,15 @@ float4 ps_model(vs_out i) : COLOR0
         col2 *= 0.9;
         col2 *= diff;
 
-        #if BONE_MAT_DEF
+        //#if SKINNING_DEF
             float2 dev_pos = gl_FragCoord.xy * g_framebuffer_size.xy;
-            float3 sss = tex2D(g_sss_s, dev_pos).rgb;
+			float3 sss;
+			if(SF_Valid){
+				sss = tex2D(g_sss_s, dev_pos).rgb;}
+			else {
+				sss = 1;}
             diff = lerp(diff, sss, g_sss_param.x);
-        #endif
+        //#endif
 
         diff *= tex2D(g_diffuse_s, frg_texcoord.xy).rgb;
 
@@ -284,7 +294,7 @@ float4 ps_model(vs_out i) : COLOR0
         float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, ray).rgb;
 
         ibl_spec = lerp(ibl_spec_shad, ibl_spec, lc);
-        ibl_spec *= g_light_env_chara_specular.rgb * 0.5;
+        ibl_spec *= g_light_env_chara_specular.rgb;
 
         diff = lerp(ibl_spec, diff, 0.94);
         diff += col2;
@@ -298,7 +308,7 @@ float4 ps_model(vs_out i) : COLOR0
         return result * g_material;
     }
 
-    float4 pos_cornea1 = float4(frg_cornea_coord.zw, 0.0, 1.0);
+    float4 pos_cornea1 = float4(frg_cornea_coord.zw, 0.0, 1.0)* float4(1, -1, 1, 1);
 
     float3 tmp;
     tmp.xy = pos_cornea1.xy * g_ellipsoid_radius.xy;
@@ -351,7 +361,7 @@ float4 ps_model(vs_out i) : COLOR0
     float len = abs(tmp.x);
 
     tmp.xy = pos_iris.xy * g_tex_scale.xy + (0.5);
-    tmp.xy *= float2(-1.0, 1.0);
+    tmp.xy *= float2(-1.0, -1.0);
     tmp.xy += float2(1.0, 0.0);
 
     float3 col0 = tex2D(g_diffuse_s, tmp.xy).rgb;

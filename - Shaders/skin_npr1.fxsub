@@ -1,5 +1,5 @@
 //============================================================================//
-//Shader "skin_default"
+//Shader "skin_npr1"
 //============================================================================//
 // - - - - - - - - - - -
 #include "- Shaders/#Include/common.fxh"
@@ -331,7 +331,6 @@ float4 ps_model(vs_out i) : COLOR0
     float4 spec = tex2D(g_specular_s, frg_texcoord);
 
     float3 diff;
-    //#if U16_DEF
 		float3 sss;
 		if(SF_Valid){
 			sss = tex2D(g_sss_s, gl_FragCoord.xy * g_framebuffer_size.xy).rgb;}
@@ -360,21 +359,7 @@ float4 ps_model(vs_out i) : COLOR0
 
             diff = lerp(diff, sss, g_sss_param.x * spec_ratio.w);
         #endif
-    //#else
-    //    diff = get_ibl_diffuse(g_ibl_diffuse_s, normal, lc);
-    //    #if NPR_DEF
-    //        diff *= g_light_env_chara_diffuse.rgb;
-    //        diff += frg_eye.w;
-    //    #else
-    //        diff *= g_light_env_chara_diffuse.rgb;
-    //        diff += frg_eye.w;
-    //        diff += g_light_env_chara_ambient.rgb;
-    //    #endif
-    //
-    //    if (TONE_CURVE) { // #if TONE_CURVE_DEF
-    //        diff += get_tone_curve(org_normal) * float(spec.a > 0.99);
-    //    } // #endif
-    //#endif
+
 
     col0.rgb *= g_texture_color_coefficients.rgb;
     col0.rgb += g_texture_color_offset.rgb;
@@ -396,6 +381,7 @@ float4 ps_model(vs_out i) : COLOR0
     spec_ratio.rgb = (spec_ratio.x + g_tex2D_color_coefficients.w);
     spec_ratio.rgb *= g_texture_specular_coefficients.rgb;
     spec_ratio.rgb += g_texture_specular_offset.rgb;
+	spec_ratio.rgb *= g_npr_param[1].x;
 
     diff += ibl_spec * spec_ratio.rgb;
 

@@ -1,10 +1,59 @@
+float set(float A, float B) {
+    return A;
+}
+
+float set2(float A, float B) {
+    return A;
+}
+
+float R_ScaleA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="R_Scale +";>;
+float R_ScaleB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="R_Scale -";>;
+float R_OffsetA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="R_Offset +";>;
+float R_OffsetB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="R_Offset -";>;
+float G_ScaleA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="G_Scale +";>;
+float G_ScaleB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="G_Scale -";>;
+float G_OffsetA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="G_Offset +";>;
+float G_OffsetB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="G_Offset -";>;
+float B_ScaleA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="B_Scale +";>;
+float B_ScaleB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="B_Scale -";>;
+float B_OffsetA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="B_Offset +";>;
+float B_OffsetB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="B_Offset -";>;
+
+float ExposureA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Exposure +";>;
+float ExposureB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Exposure -";>;
+
+float GammaA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Gamma +";>;
+float GammaB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Gamma -";>;
+float SaturationA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation +";>;
+float SaturationB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation -";>;
+
+// floats!
+static float exposure = set(ExposureA, ExposureB);
+float exposure_rate = 1.0f;
+float auto_exposure = 0; // Excluded
+
+static float4 g_exposure = float4(exposure * exposure_rate, 0.0625f, exposure * exposure_rate * 0.5f, auto_exposure ? 1.0f : 0.0f);
+static float4 g_fade_color = float4(0.00, 0.00, 0.00, 0.00);
+static float4 g_tone_scale = float4(set(R_ScaleA, R_ScaleB), set(G_ScaleA, G_ScaleB), set(B_ScaleA, B_ScaleB), 0.00);
+static float4 g_tone_offset = float4(set2(R_OffsetA, R_OffsetB), set2(G_OffsetA, G_OffsetB), set2(B_OffsetA, B_OffsetB), 0.66667);
+
+
+
+float3 apply_tonemap(float3 color) {
+  return color;
+}
+
 float3 apply_chara_color(float3 color) {
     float3 chara_color = lerp(g_chara_color0.rgb, g_chara_color1.rgb, dot(color, _y_coef_601.rgb));
-    return max(lerp(color, chara_color, g_chara_color1.a), 0.0);
+    return apply_tonemap(max(lerp(color, chara_color, g_chara_color1.a), 0.0));
 }
 
 float3 apply_fog_color(float3 color, float4 fog_color) {
-    return lerp(color, fog_color.rgb, fog_color.w);
+    return apply_tonemap(lerp(color, fog_color.rgb, fog_color.w));
+}
+
+float3 normalizedot(float3 x, float y) {
+    return sqrt(dot(x, x))/y;
 }
 
 float2 get_chara_shadow(sampler2D tex, float3 normal, float3 texcoord) {

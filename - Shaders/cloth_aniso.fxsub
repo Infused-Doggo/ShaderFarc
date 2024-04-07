@@ -3,7 +3,7 @@
 //============================================================================//
 // - - - - - - - - - - -
 #include "- Shaders/#Include/common.fxh"
-//#include "- Shaders/#Include/common_scene.fxh"
+#include "- Shaders/#Include/common_scene.fxh"
 #include "- Shaders/#Include/common_chara.fxh"
 // - - - - - - - - - - -
 //  Textures / Samplers  :
@@ -125,16 +125,17 @@ sampler g_ibl_specular_shadowed_rough_s = sampler_state {
 	ADDRESSV  = WRAP;
 	ADDRESSW  = WRAP;
 };
-//=== Custom ===//
-shared texture2D g_aniso : RENDERCOLORTARGET <
+//=== SSS ===//
+shared texture2D g_sss : RENDERCOLORTARGET <
 	string Format = "A16B16G16R16F";>;
-sampler2D g_aniso_s = sampler_state {
-    Texture = <g_aniso>;
-    MinFilter = LINEAR;
-    MagFilter = LINEAR;
-    MipFilter = LINEAR;
-    AddressU  = WRAP;
-    AddressV  = WRAP;
+sampler g_sss_s = sampler_state {
+    Texture = <g_sss>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = POINT;
+	ADDRESSU  = CLAMP;
+	ADDRESSV  = CLAMP;
+	ADDRESSW  = CLAMP;
 };
 //=== Shadow Depth ===//
 texture2D g_shadow_depth0;
@@ -209,12 +210,12 @@ vs_out vs_model (vs_in i)
         normal_v = normal_w * mat3(g_worldview);
         pos_c = pos_w * g_transforms;
     #else
-        pos_w.xyz = mul(float4(a_position, 1.0), (float4x4)g_worlds).xyz;
+        pos_w.xyz = mul(g_worlds, float4(a_position, 1.0)).xyz;
         pos_w.w = 1.0;
-        normal_w = mul(a_normal, (float3x3)g_worlds);
-        tangent_w = mul(a_tangent.xyz, (float3x3)g_worlds);
+        normal_w = mul((float3x3)g_worlds, a_normal);
+        tangent_w = mul((float3x3)g_worlds, a_tangent.xyz);
 
-        normal_v = mul(a_normal, (float3x3)g_worldview);
+        normal_v = mul((float3x3)g_worldview, a_normal);
         pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
     o.position = pos_c;
@@ -339,12 +340,7 @@ float4 ps_model(vs_out i) : COLOR0
 
     normal = mul(org_normal, (float3x3)g_normal_tangent_transforms);
     eye = mul(org_eye, (float3x3)g_normal_tangent_transforms);
-	if(SF_Valid) {
-	tangent = mul(org_tangent, (float3x3)g_normal_tangent_transforms);
-	tangent = lerp(tangent, tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb, saturate(dot(eye, frg_normal)));
-	} else {
     tangent = mul(org_tangent, (float3x3)g_normal_tangent_transforms);
-	}
 
     float2 lc;
     //#if U16_DEF

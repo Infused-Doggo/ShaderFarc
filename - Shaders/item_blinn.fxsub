@@ -3,7 +3,7 @@
 //============================================================================//
 // - - - - - - - - - - -
 #include "- Shaders/#Include/common.fxh"
-//#include "- Shaders/#Include/common_scene.fxh"
+#include "- Shaders/#Include/common_scene.fxh"
 #include "- Shaders/#Include/common_chara.fxh"
 // - - - - - - - - - - -
 //  Textures / Samplers  :
@@ -223,14 +223,14 @@ vs_out vs_model (vs_in i)
             tangent_m = a_tangent.xyz;
         #endif
 
-        pos_w.xyz = mul(pos_m, (float3x3)g_worlds);
+        pos_w.xyz = mul(g_worlds, float4(a_position, 1.0)).xyz;
         pos_w.w = 1.0;
+		
+        normal_w = mul((float3x3)g_worlds, a_normal);
+        tangent_w = mul((float3x3)g_worlds, a_tangent.xyz);
 
-        normal_w = mul(normal_m, (float3x3)g_worlds);
-        tangent_w = mul(tangent_m, (float3x3)g_worlds);
-
-        normal_v = mul(normal_w, (float3x3)g_worldview);
-        pos_c = mul(pos_m, g_transforms);
+        normal_v = mul((float3x3)g_worldview, a_normal);
+        pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
     o.position = pos_c;
 	

@@ -1,18 +1,5 @@
 
-// ADVANCED
-#define Enable_NPR 0  // Toon Style Array
-#define Eyeball_Offset 1  // Recommended for DIVA Heads
-#define SSS_Intensity 0.5
 
-//==============================//
-//           IBL(s) : 
-//=============================//
-#define _IBL "IBL(s)/IBL.dds"   // Diffuse
-#define _IBL1 "IBL(s)/1_.dds"   // Specular
-#define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
-#define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
-#define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
-//================================================================//
 
 float4   Camera_Position    : POSITION  < string Object = "Camera"; >;
 float4   Camera_Direction  : DIRECTION  < string Object = "Camera"; >;
@@ -27,13 +14,34 @@ static const float4 g_framebuffer_size = float4(1 + ViewportOffset.xyxy);
 #define SF_X "ShaderFarc.x"
 bool SF_Valid : CONTROLOBJECT < string name = SF_X; >;
 
-#define Controller "#ShaderFarc_Controller.pmx"
-#define IBLDirection "IBL Direction"
 
 float4x4 IBL_Controller : CONTROLOBJECT < string name = Controller; string item = IBLDirection ; >;
 
 static float3 IBL_Dir = IBL_Controller._31_32_33;
 //static float3 IBL_Dir = IBL_Controller._31_32_33;
+
+//static float4 g_light_env_chara_diffuse = LightAmbient;
+//static float4 g_light_env_chara_ambient = LightDiffuse;
+//static float4 g_light_env_chara_specular = LightSpecular;
+
+float4x4 Diffu : CONTROLOBJECT < string name = Controller; string item = "Chara_Diffuse" ; >;
+float4x4 Specu : CONTROLOBJECT < string name = Controller; string item = "Chara_Specular" ; >;
+float4x4 Ambi : CONTROLOBJECT < string name = Controller; string item = "Chara_Ambient" ; >;
+
+float4x4 Stage_Diffu : CONTROLOBJECT < string name = Controller; string item = "Stage_Diffuse" ; >;
+float4x4 Stage_Specu : CONTROLOBJECT < string name = Controller; string item = "Stage_Specular" ; >;
+
+static float4 chara_diffuse = Diffu._41_42_43_31 - float4(7, 15, -0.5, 0);
+static float4 chara_specular = Specu._41_42_43_31 - float4(7, 11, -0.5, 0);
+static float4 chara_ambient = Ambi._41_42_43_31 - float4(7, 13, -0.5, 0);
+static float4 stage_diffuse = Stage_Diffu._41_42_43_31 - float4(-7, 15, -0.5, 0);
+static float4 stage_specular = Stage_Specu._41_42_43_31 - float4(-7, 11, -0.5, 0);
+
+float Override : CONTROLOBJECT < string name = Controller; string item = "Override";>;
+
+#if SHADER_TYPE == 5
+float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item = EyeJoint; >;
+#endif
 
 float3x3 Rotation(float3 in_axis, float s, float c)
 {	
@@ -113,7 +121,44 @@ float3x3 NormalTransform(float3 Light_Direction, float3 IBL_dir)
 
 static float3x3 g_normal_tangent_transforms = NormalTransform(Light_Direction, -IBL_Dir);
 
+float4x4 inverse(float4x4 m) {
+    float n11 = m[0][0], n12 = m[1][0], n13 = m[2][0], n14 = m[3][0];
+    float n21 = m[0][1], n22 = m[1][1], n23 = m[2][1], n24 = m[3][1];
+    float n31 = m[0][2], n32 = m[1][2], n33 = m[2][2], n34 = m[3][2];
+    float n41 = m[0][3], n42 = m[1][3], n43 = m[2][3], n44 = m[3][3];
 
+    float t11 = n23 * n34 * n42 - n24 * n33 * n42 + n24 * n32 * n43 - n22 * n34 * n43 - n23 * n32 * n44 + n22 * n33 * n44;
+    float t12 = n14 * n33 * n42 - n13 * n34 * n42 - n14 * n32 * n43 + n12 * n34 * n43 + n13 * n32 * n44 - n12 * n33 * n44;
+    float t13 = n13 * n24 * n42 - n14 * n23 * n42 + n14 * n22 * n43 - n12 * n24 * n43 - n13 * n22 * n44 + n12 * n23 * n44;
+    float t14 = n14 * n23 * n32 - n13 * n24 * n32 - n14 * n22 * n33 + n12 * n24 * n33 + n13 * n22 * n34 - n12 * n23 * n34;
+
+    float det = n11 * t11 + n21 * t12 + n31 * t13 + n41 * t14;
+    float idet = 1.0f / det;
+
+    float4x4 ret;
+
+    ret[0][0] = t11 * idet;
+    ret[0][1] = (n24 * n33 * n41 - n23 * n34 * n41 - n24 * n31 * n43 + n21 * n34 * n43 + n23 * n31 * n44 - n21 * n33 * n44) * idet;
+    ret[0][2] = (n22 * n34 * n41 - n24 * n32 * n41 + n24 * n31 * n42 - n21 * n34 * n42 - n22 * n31 * n44 + n21 * n32 * n44) * idet;
+    ret[0][3] = (n23 * n32 * n41 - n22 * n33 * n41 - n23 * n31 * n42 + n21 * n33 * n42 + n22 * n31 * n43 - n21 * n32 * n43) * idet;
+
+    ret[1][0] = t12 * idet;
+    ret[1][1] = (n13 * n34 * n41 - n14 * n33 * n41 + n14 * n31 * n43 - n11 * n34 * n43 - n13 * n31 * n44 + n11 * n33 * n44) * idet;
+    ret[1][2] = (n14 * n32 * n41 - n12 * n34 * n41 - n14 * n31 * n42 + n11 * n34 * n42 + n12 * n31 * n44 - n11 * n32 * n44) * idet;
+    ret[1][3] = (n12 * n33 * n41 - n13 * n32 * n41 + n13 * n31 * n42 - n11 * n33 * n42 - n12 * n31 * n43 + n11 * n32 * n43) * idet;
+
+    ret[2][0] = t13 * idet;
+    ret[2][1] = (n14 * n23 * n41 - n13 * n24 * n41 - n14 * n21 * n43 + n11 * n24 * n43 + n13 * n21 * n44 - n11 * n23 * n44) * idet;
+    ret[2][2] = (n12 * n24 * n41 - n14 * n22 * n41 + n14 * n21 * n42 - n11 * n24 * n42 - n12 * n21 * n44 + n11 * n22 * n44) * idet;
+    ret[2][3] = (n13 * n22 * n41 - n12 * n23 * n41 - n13 * n21 * n42 + n11 * n23 * n42 + n12 * n21 * n43 - n11 * n22 * n43) * idet;
+
+    ret[3][0] = t14 * idet;
+    ret[3][1] = (n13 * n24 * n31 - n14 * n23 * n31 + n14 * n21 * n33 - n11 * n24 * n33 - n13 * n21 * n34 + n11 * n23 * n34) * idet;
+    ret[3][2] = (n14 * n22 * n31 - n12 * n24 * n31 - n14 * n21 * n32 + n11 * n24 * n32 + n12 * n21 * n34 - n11 * n22 * n34) * idet;
+    ret[3][3] = (n12 * n23 * n31 - n13 * n22 * n31 + n13 * n21 * n32 - n11 * n23 * n32 - n12 * n21 * n33 + n11 * n22 * n33) * idet;
+
+    return ret;
+}
 
 // 座法変換行列
 
@@ -124,8 +169,8 @@ float4x4 g_worlds     : WORLD;
 float4x4 g_worlds_invtrans : WORLDINVERSETRANSPOSE;
 float4x4 g_worldview        : WORLDVIEW;
 float4x4 g_worldview_inverse : WORLDVIEWINVERSE;
-float4x4 g_joint : VIEW;
-float4x4 g_joint_inverse : VIEWINVERSE;
+float4x4 g_joint : VIEWINVERSE;
+float4x4 g_joint_inverse : VIEW;
     //mat2x4 g_texcoord_transforms[2];
 
 
@@ -140,9 +185,6 @@ float4   MaterialToon      : TOONCOLOR;
 float4   LightDiffuse      : DIFFUSE   < string Object = "Light"; >;
 float4   LightAmbient      : AMBIENT   < string Object = "Light"; >;
 float4   LightSpecular     : SPECULAR  < string Object = "Light"; >;
-static float4 DiffuseColor  = MaterialDiffuse  * float4(LightDiffuse);
-static float4 AmbientColor  = MaterialAmbient  * LightAmbient + MaterialEmmisive;
-static float4 SpecularColor = MaterialSpecular * LightSpecular;
 
 float Tr : CONTROLOBJECT <string name="(Adjuster.pmd)"; string item="合成弱め";>;
 float BrightPlus : CONTROLOBJECT <string name="(self)"; string item="isekai";>;
@@ -189,113 +231,53 @@ static float4 g_material = float4(1, 1, 1, clamp(MaterialDiffuse.w, 0, 1));
 
 #define U18 0 //???
 
-static float4 g_light_env_chara_diffuse = LightAmbient;
-static float4 g_light_env_chara_ambient = LightDiffuse;
-static float4 g_light_env_chara_specular = LightSpecular;
-
-static float4 g_view_position = float4(Camera_Position.xyz, 0.00);
-static float4 g_light_chara_dir = float4(-Light_Direction.xyz * float3(1, 1, -1), 0.00);
+static float4 g_npr_cloth_spec_color = float4(LightSpecular.xyz * 2, 0.20);
 
 #ifdef PMX_Color
-float4 g_material_state_diffuse = MaterialDiffuse;
-float4 g_material_state_ambient = MaterialAmbient;
-float4 g_material_state_emission = Emission;
-
-#if SHADER_TYPE == 5
-float4 g_material_state_shininess = float4(10.0f, 0.00, 0.00, 0.00);
-#else
-float4 g_material_state_shininess = float4(max((SpecularPower - 16.0f)*(1.0f/112.0f), 0.0f), 0.00, 0.00, 0.00);
-#endif
 
 float4 PMX_Specular = Specular;
-static float4 g_material_state_specular = float4((float4(MaterialSpecular.xyz, PMX_Specular.w) * LightAmbient).xyz, length(LightAmbient.xyz);
-
-#if Fresnel > 8
-    static float fresnel_i = 9.0f;
-#else
-    static float fresnel_i = 7.0f;
-#endif
-
-#if Phong_Shading == 1
-static float line_light_f = (float)Line_light * (float)(1.0 / 9.0);
-#else
-static float line_light_f = 0.0f;
-#endif
-static float fresnel_f = (fresnel_i - 1.0f) * 0.12f * 0.82f;
-
-static float4 g_fresnel_coefficients = float4(fresnel_f, 0.18f, line_light_f, 0.00f);
-
-float4 g_shininess = float4(max(SpecularPower, 1.0f), 0.00f, 0.00f, 0.00f);
+static float4 g_material_state_specular = float4(MaterialSpecular.xyz, length(LightAmbient.xyz));
 
 #else
-float4 g_material_state_diffuse = Diffuse;
-float4 g_material_state_ambient = Ambient;
-float4 g_material_state_emission = Emission;
 
-#if SHADER_TYPE == 5
-float4 g_material_state_shininess = float4(10.0f, 0.00, 0.00, 0.00);
-#else
-float4 g_material_state_shininess = float4(max((Shininess - 16.0f)*(1.0f/112.0f), 0.0f), 0.00, 0.00, 0.00);
+static float4 g_material_state_specular = float4(Specular.xyz, length(LightAmbient.xyz));
+
 #endif
-static float4 g_material_state_specular = float4((Specular * LightAmbient).xyz, length(LightAmbient.xyz));
-
-#if Fresnel > 8
-    static float fresnel_i = 9.0f;
-#else
-    static float fresnel_i = 7.0f;
-#endif
-
-#if Phong_Shading == 1
-static float line_light_f = (float)Line_light * (float)(1.0 / 9.0);
-#else
-static float line_light_f = 0.0f;
-#endif
-static float fresnel_f = (fresnel_i - 1.0f) * 0.12f * 0.82f;
-
-static float4 g_fresnel_coefficients = float4(fresnel_f, 0.18f, line_light_f, 0.00f);
-
-float4 g_shininess = float4(max(Shininess, 1.0f), 0.00f, 0.00f, 0.00f);
-#endif
-float4 g_intensity = float4(Intensity, 1.00, 0.00, 1.00);
 
 float4 g_sss_param = float4(SSS_Intensity, 0.00, 0.00, 0.50);
 
-    float4 field_0 = float4(5.0f, 5.0f, 0.5f, 0.5f);
-    float4 field_10 = float4(2.5f, 2.5f, 0.5f, 0.5f);
-    float field_20 = 1.0f;
-    float field_24 = 1.45f;
-    float field_28 = 0.02f;
-    float field_2C = 0.85f;
-    float3 field_30 = float3(1.0f, 1.2f, 0.45f);
-    float3 field_3C = float3(1.0f, 1.2f, 0.25f);
-    float3 field_48 = float3(0.5f, 0.6f, 0.4f);
-    float field_54 = -0.2f;
-    float3 field_58 = float3(1.0f, 1.0f, 1.0f);
+
+#if Fresnel > 8
+    static float fresnel_i = 9.0f;
+#else
+    static float fresnel_i = 7.0f;
+#endif
+
+#if Phong_Shading == 1
+static float line_light_f = (float)Line_light * (float)(1.0 / 9.0);
+#else
+static float line_light_f = 0.0f;
+#endif
+static float fresnel_f = (fresnel_i - 1.0f) * 0.12f * 0.82f;
+
+static float4 g_fresnel_coefficients = float4(fresnel_f, 0.18f, line_light_f, 0.00f);
 	
-    static const float field_64 = field_2C / field_28; ////////////////////////////
-    static const float3 field_68 = float3(field_30 * field_28); ////////////////////////////
-    static const float3 field_74 = float3(field_3C * field_28);
-    static const float3 field_80 = float3(field_48 * field_28);
-    static const float field_8C = field_54 * field_28; ////////////////////////////
-    static const float3 field_90 = float3(field_58); ////////////////////////////
-	float4 field_A0 = float4(0.0f, 0.0f, 0.0f, 0.0f);
 	
-    static const float4 g_ellipsoid_radius = float4(rcp(field_68 * field_68), (field_68 * field_68).z);
-    static const float4 g_ellipsoid_scale = float4(field_68, 1.0f);
-    static const float4 g_tex_model_param = float4(field_0);
-    static const float4 g_tex_offset = float4(field_A0);
-    static const float4 g_eb_radius = float4(rcp(field_90 * field_90), (field_90 * field_90).z);
-    static const float4 g_eb_tex_model_param = float4(field_10);
-	static const float v2 = (field_20 - field_24) / (field_20 + field_24);
-    static const float4 g_fresnel = float4(1.0f - (v2 * v2), (v2 * v2), 0.0f, 0.0f);
-	static const float v3 = (field_20 * field_20) / (field_24 * field_24);
-    static const float4 g_refract1 = float4(v3, 1.0f - v3, field_20 / field_24, 0.0f);
-	static const float v4 = (field_24 * field_24) / (field_20 * field_20);
-    static const float4 g_refract2 = float4(v4, 1.0f - v4, field_24 / field_20, 0.0f);
-    static const float4 g_iris_radius = float4(rcp(field_74 * field_74), -1.0f);
-    static const float4 g_cornea_radius = float4(rcp(field_68 * field_68), -1.0f);
-    static const float4 g_pupil_radius = float4(rcp(field_80 * field_80), -1.0f);
-    static const float4 g_tex_scale = float4(rcp(field_0.xy * field_74.xy), field_64 * 1.442695f, field_8C);
+	//GlassEyeBatch
+    static const float4 g_ellipsoid_radius = float4(2500.00, 1736.11108, 12345.68066, 0.00008);
+    static const float4 g_ellipsoid_scale = float4(0.02, -0.024, 0.009, 1.00);
+    static const float4 g_tex_model_param = float4(5.00, 5.00, 0.50, 0.50);
+    static const float4 g_tex_offset = float4(0.00, 0.00, 0.00, 0.00);
+    static const float4 g_eb_radius = float4(1.00, 1.00, 1.00, 1.00);
+    static const float4 g_eb_tex_model_param = float4(2.50, 2.50, 0.50, 0.50);
+    static const float4 g_fresnel = float4(0.96626, 0.03374, 0.00, 0.00);
+    static const float4 g_refract1 = float4(0.47562, 0.52438, 0.68966, 0.00);
+    static const float4 g_refract2 = float4(2.1025, -1.1025, 1.45, 0.00);
+    static const float4 g_iris_radius = float4(2500.00, 1736.11108, 40000.00, -1.00);
+    static const float4 g_cornea_radius = float4(2500.00, 1736.11108, 12345.68066, -1.00);
+    static const float4 g_pupil_radius = float4(10000.00, 6944.44434, 15624.99805, -1.00);
+    static const float4 g_tex_scale = float4(10.00, 8.33333, 61.31454, -0.004);
+
 	
 float2 gl_FragCoord;
 
@@ -321,9 +303,12 @@ float2 gl_FragCoord;
 	#define ANISO_3 0
 #endif
 
-#if Enable_NPR
+#if Graphic_Style == 1
 	#define NPR 1
+    #define NPR_DEF 1
 #endif
 	
-	#include "+/+ HgShadow.fxh"
-	#include "+/sss_skin.fxsub"
+#include "+/+ HgShadow.fxh"
+
+#include "+/sss_skin.fxsub"
+

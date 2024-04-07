@@ -1,9 +1,9 @@
 //============================================================================//
-//Shader "sss_skin"
+//Shader "skin_default"
 //============================================================================//
 // - - - - - - - - - - -
 #include "+/common.fxh"
-//#include "+/common_scene.fxh"
+#include "+/common_scene.fxh"
 #include "+/common_chara.fxh"
 // - - - - - - - - - - -
 //  Textures / Samplers  :
@@ -85,7 +85,7 @@ vs_out vs_model (vs_in i)
     float3 normal_w;
     float4 pos_c;
     float3 normal_v;
-    #if BONE_MAT_DEF
+    #if SKINNING_DEF
         ivec4 mtxidx = max(ivec4(0.0), a_matrix_index);
         vec4 weight = mix(vec4(0.0), a_weight, greaterThanEqual(a_matrix_index, ivec4(0.0)));
 
@@ -95,20 +95,19 @@ vs_out vs_model (vs_in i)
         normal_v = normal_w * mat3(g_worldview);
         pos_c = pos_w * g_transforms;
     #else
-        pos_w = (0.0);
-        normal_w = mul(a_normal, (float3x3)g_worlds);
+        pos_w = 0.0;
+        normal_w = mul((float3x3)g_worlds, a_normal);
 
-        normal_v = mul(normal_w, (float3x3)g_worldview);
+        normal_v = mul((float3x3)g_worldview, normal_w);
         pos_c = mul(float4(a_position, 1.0), g_transforms);
     #endif
-
     o.position = pos_c;
 	
 	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
     1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
 	o.fragcoord = fragcoord.xy;
-
-        o.texcoord = float4(a_texcoord, 0.0, 1.0) * g_texcoord_transforms[0];
+	
+    o.texcoord = float4(a_texcoord, 0.0, 1.0) * g_texcoord_transforms[0];
 
     if (SHADOW) { // #if SHADOW_DEF
         o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[1];
@@ -136,7 +135,7 @@ vs_out vs_model (vs_in i)
     o.eye.w = diff.x + diff.y;
 
     float2 luce;
-    luce.x = clamp(dot(-eye_w.xyz, g_light_chara_dir.xyz), 0.0, 1.0);
+    luce.x = clamp(dot(inv(-eye_w.xyz), -g_light_chara_dir.xyz), 0.0, 1.0);
     luce.x += pow(luce.x, 4.0);
     luce.y = dot(normal_w, g_light_chara_dir.xyz) + 1.0;
     luce.y = clamp(luce.y * luce.y, 0.0, 1.0);
@@ -165,7 +164,7 @@ float4 ps_model(vs_out i) : COLOR0
 
     #if NPR_DEF
         if (U26) { // #if U26_DEF
-            float3 tmp = mul(normal, (float3x3)g_worldview);
+            float3 tmp = mul((float3x3)g_worldview, normal);
             tmp.xy += 2.0;
             result.z = tmp.y;
             result.y = lerp(tmp.x, 100.0, float(g_material_state_emission.a < 0.15));

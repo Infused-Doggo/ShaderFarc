@@ -1,9 +1,11 @@
+float Override_TM : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Override";>;
+
 float set(float A, float B) {
-    return 1 + (A * 1.5) * 1 - B;
+    return lerp(1 + (A * 1.5) * 1 - B, A, (int)Override_TM);
 }
 
 float set2(float A, float B) {
-    return (A * 1.5) - (B * 1.5);
+    return lerp((A * 1.5) - (B * 1.5), A, (int)Override_TM);
 }
 
 float R_ScaleA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="R_Scale +";>;
@@ -29,7 +31,7 @@ float SaturationB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string
 
 // floats!
 static float exposure = set(ExposureA, ExposureB);
-float exposure_rate = 2.5f;
+float exposure_rate = 1.0f;
 float auto_exposure = 0; // Excluded
 
 static float4 g_exposure = float4(exposure * exposure_rate, 0.0625f, exposure * exposure_rate * 0.5f, auto_exposure ? 1.0f : 0.0f);
@@ -69,6 +71,9 @@ float3 apply_tonemap(float3 color) {
 	float3 r3;
 	float3 r4;
 	
+	
+	g_tone_scale.xyz = g_tone_scale.xyz * 1.1;
+	g_tone_offset.xyz = g_tone_offset.xyz * lerp(1.1, -1.1, (int)Override_TM);
   float2 v3 = float2(g_exposure.x, g_exposure.y * g_exposure.x);
   r0 = color;
   r0.y = dot(r0.xyz, float3(0.300000012,0.589999974,0.109999999));
@@ -104,6 +109,10 @@ float3 apply_chara_color(float3 color) {
 
 float3 apply_fog_color(float3 color, float4 fog_color) {
     return apply_tonemap(lerp(color, fog_color.rgb, fog_color.w));
+}
+
+float3 normalizedot(float3 x, float y) {
+    return sqrt(dot(x, x))/y;
 }
 
 float2 get_chara_shadow(sampler2D tex, float3 normal, float3 texcoord) {

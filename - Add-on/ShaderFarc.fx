@@ -1,6 +1,6 @@
 //=== Settings: ===//
 	// SSS:
-	float4 SSS_Tone = float4(1.00, 0.96, 1.00, 0.00);
+	float4 SSS_Tone = float4(1.00, 0.96, 1.00, 0.00)*float4(0.95, 0.97, 1.00, 0.00);
 	
 	// Aniso:
 	float Size = 8.0f; // Blur Size (Radius)
@@ -42,6 +42,8 @@ texture2D DepthBuffer : RENDERDEPTHSTENCILTARGET <
 
 shared texture2D g_sss : RENDERCOLORTARGET <
 	bool AntiAlias = true;
+	int Width  = 320*2;
+    int Height = 180*2;
 	string Format = "A16B16G16R16F";
 >;
 
@@ -52,6 +54,8 @@ shared texture2D g_aniso : RENDERCOLORTARGET <
 
 shared texture2D g_tonemap : RENDERCOLORTARGET <
 	bool AntiAlias = true;
+	int Width  = 256;
+    int Height = 1;
 	string Format = "A16B16G16R16F";
 >;
 	
@@ -60,7 +64,8 @@ shared texture2D g_tonemap : RENDERCOLORTARGET <
 texture2D SSS_SF : OFFSCREENRENDERTARGET
 <
     string Description = "SSS Material Array";
-    float2 ViewPortRatio = {1.0f, 1.0f};
+    int Width  = 640;
+    int Height = 360;
     float4 ClearColor = {1.0f, 1.0f, 1.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -83,7 +88,7 @@ sampler2D SSSS = sampler_state {
 texture2D ANISO_SF : OFFSCREENRENDERTARGET
 <
     string Description = "(ANISO) U/V/Radial Array";
-    float2 ViewPortRatio = {1.0f, 1.0f};
+
     float4 ClearColor = {1.0f, 1.0f, 1.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -120,7 +125,8 @@ sampler2D Aniso = sampler_state {
 //=== DEPTH ===//
 texture DEPTH_SF : OFFSCREENRENDERTARGET
 <   string Description = "ShaderFarc Depth";
-    float2 ViewPortRatio = {1.0f, 1.0f};
+    int Width  = 1080;
+    int Height = 720;
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -141,7 +147,7 @@ sampler2D DS = sampler_state {
 };
 
 // レンダリングターゲットのクリア値
-float4 ClearColor = {0,0,0,0};
+float4 ClearColor = {0.75f,0.75f,0.75f,0};
 float ClearDepth  = 1.0;
 
 float2 ViewportSize : VIEWPORTPIXELSIZE;
@@ -153,9 +159,10 @@ static const float2 ViewportOffset = float2(0.5,0.5)/ViewportSize;
 	float SaturationA : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation +";>;
 	float SaturationB : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation -";>;
 	float Saturation_Pow : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Saturation_Pow";>;
+	float Override : CONTROLOBJECT <string name="#ToneMap_Controller.pmx"; string item="Override";>;
 	
 	float set(float A, float B) {
-		return Lut_Intensity + (A * 2.5) * 1 - B;
+		return lerp(Lut_Intensity + (A * 2.5) * 1 - B, A, (int)Override);
 	}
 
 //============================================================================//
@@ -234,48 +241,50 @@ float4 ps_expand(vs_out i) : COLOR0
 float4 ps_model(vs_out i) : COLOR0
 {	
 	float4 g_color = SSS_Tone;
-	float4 g_param = float4(1.00, 0.00, 1.00, 1.00);
+	float4 g_param = float4(5.00, 0.00, 1.00, 1.00);
 	float4 g_texcoord_modifier = float4(0.50, -0.50, 0.50, 0.50);
 	float4 g_texel_size = float4(0.00313, 0.00556, 320.00, 180.00);
 	
 	//GaussianCoef
 	float4 g_coef[36] = {
-    float4(0.13436, 0.69615, 0.53141, 0.00),
-    float4(0.10347, 0.07231, 0.09273, 0.00),
-    float4(0.0528, 0.02162, 0.02528, 0.00),
-    float4(0.02541, 0.00655, 0.0118, 0.00),
-    float4(0.01524, 0.00124, 0.00635, 0.00),
-    float4(0.01045, 0.00014, 0.00293, 0.00),
-    float4(0.10347, 0.07231, 0.09273, 0.00),
-    float4(0.08109, 0.03804, 0.05171, 0.00),
-    float4(0.04393, 0.01701, 0.02004, 0.00),
-    float4(0.02303, 0.00516, 0.01074, 0.00),
-    float4(0.01448, 0.00097, 0.00583, 0.00),
-    float4(0.0101, 0.00011, 0.00269, 0.00),
-    float4(0.0528, 0.02162, 0.02528, 0.00),
-    float4(0.04393, 0.01701, 0.02004, 0.00),
-    float4(0.02842, 0.00832, 0.01307, 0.00),
-    float4(0.01819, 0.00253, 0.00823, 0.00),
-    float4(0.01264, 0.00048, 0.00451, 0.00),
-    float4(0.00918, 0.00006, 0.00208, 0.00),
-    float4(0.02541, 0.00655, 0.0118, 0.00),
-    float4(0.02303, 0.00516, 0.01074, 0.00),
-    float4(0.01819, 0.00253, 0.00823, 0.00),
-    float4(0.01381, 0.00077, 0.00535, 0.00),
-    float4(0.01045, 0.00014, 0.00293, 0.00),
-    float4(0.00798, 0.00002, 0.00136, 0.00),
-    float4(0.01524, 0.00124, 0.00635, 0.00),
-    float4(0.01448, 0.00097, 0.00583, 0.00),
-    float4(0.01264, 0.00048, 0.00451, 0.00),
-    float4(0.01045, 0.00014, 0.00293, 0.00),
-    float4(0.00842, 0.00003, 0.00161, 0.00),
-    float4(0.00676, 3.19379E-06, 0.00074, 0.00),
-    float4(0.01045, 0.00014, 0.00293, 0.00),
-    float4(0.0101, 0.00011, 0.00269, 0.00),
-    float4(0.00918, 0.00006, 0.00208, 0.00),
-    float4(0.00798, 0.00002, 0.00136, 0.00),
-	float4(0.00676, 3.19379E-06, 0.00074, 0.00),
-	float4(0.00566, 3.73915E-07, 0.00034, 0.00)};
+    float4(0.60405, 0.97521, 0.86797, 0.00),
+    float4(0.09639, 0.01213, 0.05464, 0.00),
+    float4(0.02369, 1.03713E-06, 0.00187, 0.00),
+    float4(0.00888, 1.72203E-13, 6.79345E-06, 0.00),
+    float4(0.00252, 5.55048E-23, 2.60061E-09, 0.00),
+    float4(0.0005, 3.47299E-35, 1.05140E-13, 0.00),
+    float4(0.09639, 0.01213, 0.05464, 0.00),
+    float4(0.04905, 0.00053, 0.01775, 0.00),
+    float4(0.01883, 4.56956E-08, 0.00061, 0.00),
+    float4(0.00742, 7.58721E-15, 2.20773E-06, 0.00),
+    float4(0.00211, 2.44552E-24, 8.45142E-10, 0.00),
+    float4(0.00042, 1.53019E-36, 3.41683E-14, 0.00),
+    float4(0.02369, 1.03713E-06, 0.00187, 0.00),
+    float4(0.01883, 4.56956E-08, 0.00061, 0.00),
+    float4(0.01065, 3.90840E-12, 0.00002, 0.00),
+    float4(0.00432, 6.48943E-19, 7.57722E-08, 0.00),
+    float4(0.00123, 2.09169E-28, 2.90064E-11, 0.00),
+    float4(0.00024, 0.00, 1.17270E-15, 0.00),
+    float4(0.00888, 1.72203E-13, 6.79345E-06, 0.00),
+    float4(0.00742, 7.58721E-15, 2.20773E-06, 0.00),
+    float4(0.00432, 6.48943E-19, 7.57722E-08, 0.00),
+    float4(0.00176, 1.07749E-25, 2.74653E-10, 0.00),
+    float4(0.0005, 3.47299E-35, 1.05140E-13, 0.00),
+    float4(0.0001, 0.00, 4.25073E-18, 0.00),
+    float4(0.00252, 5.55048E-23, 2.60061E-09, 0.00),
+    float4(0.00211, 2.44552E-24, 8.45142E-10, 0.00),
+    float4(0.00123, 2.09169E-28, 2.90064E-11, 0.00),
+    float4(0.0005, 3.47299E-35, 1.05140E-13, 0.00),
+    float4(0.00014, 0.00, 4.02488E-17, 0.00),
+    float4(0.00003, 0.00, 1.62723E-21, 0.00),
+    float4(0.0005, 3.47299E-35, 1.05140E-13, 0.00),
+    float4(0.00042, 1.53019E-36, 3.41683E-14, 0.00),
+    float4(0.00024, 0.00, 1.17270E-15, 0.00),
+    float4(0.0001, 0.00, 4.25073E-18, 0.00),
+    float4(0.00003, 0.00, 1.62723E-21, 0.00),
+    float4(5.57189E-06, 0.00, 6.57873E-26, 0.00)
+};
+
 	  
   float2 frg_texcoord = i.o1;
   float4 result;
@@ -424,15 +433,14 @@ float4 ps_tonemap(vs_out i, float2 UV : TEXCOORD0) : COLOR0
     for (int i = 1; i < tone_map_size; i++) {
         float gamma = pow(1.0f - exp((float)-i * tone_map_scale), gamma_power);
 		float saturation = gamma * 2.0f - 1.0f;
-		float saturation2 = 1.0f;
         for (int j = 0; j < saturate_power; j++) {
-            saturation2 *= saturation;
-            saturation2 *= saturation2;
-			saturation2 *= saturation2;
-			saturation2 *= saturation2;
-		}
+            saturation *= saturation;
+            saturation *= saturation;
+            saturation *= saturation;
+            saturation *= saturation;
+        }
 		tex_data.x = gamma;
-		tex_data.y = gamma * saturate_coeff * (1.0f - (Saturation_Pow > 0.5 ? saturation2 : saturation));
+		tex_data.y = gamma * saturate_coeff * ((float)TONE_MAP_SAT_GAMMA_SAMPLES / (UV.x * 512)) * (1.0f - saturation);
 	}
 	return tex_data;
 }

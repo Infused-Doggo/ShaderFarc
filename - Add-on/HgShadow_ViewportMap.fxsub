@@ -316,8 +316,7 @@ float4 PS_Object(VS_OUTPUT IN, uniform bool useSelfShadow) : COLOR
     float depth = length( IN.Eye );
 
     // ライト方向と法線のなす角
-    //float LightNormal = dot( normalize(IN.Normal), -LightDirection );
-	float LightNormal = 1;
+    float LightNormal = 1;
 
     // カメラ方向と法線のなす角
     //float CameraNormal = dot( normalize(IN.Normal), normalize(IN.Eye) );
@@ -337,7 +336,7 @@ float4 PS_Object(VS_OUTPUT IN, uniform bool useSelfShadow) : COLOR
         // 遮蔽率と遮蔽距離(マップ境界付近は2つのマップからの線形補間)
         float2 CompDist1 = CalcShadowCompDist(ZPlot.Tex1, depth, persRate, angRate, NearDistParam);
         float2 CompDist2 = CalcShadowCompDist(ZPlot.Tex2, depth, persRate, angRate, NearDistParam);
-        comp = lerp(CompDist2.x, CompDist1.x, ZPlot.Weight);
+        comp = lerp(CompDist2.x, CompDist1.x, ZPlot.Weight) +(CompDist2.y+(CompDist1.x*0.4) /6);
         dist = lerp(CompDist2.y, CompDist1.y, ZPlot.Weight);
 
         // PMD・PMXのトゥーン適用(モデル描画時にも適用するのでここでは浅めに掛けておく)
@@ -347,9 +346,9 @@ float4 PS_Object(VS_OUTPUT IN, uniform bool useSelfShadow) : COLOR
     }
 
     #if SoftShadowQuality == 3
-    return float4(comp, max(BlurScale+dist*10000.0f+1.0f, -1.0f), depth, LightNormal);
+    return float4(comp, max(BlurScale+dist*10000.0f+1.0f, -1.0f), depth, 1);
     #else
-    return float4(comp, max(BlurScale+3.0f, -1.0f), depth, LightNormal);
+    return float4(comp, max(BlurScale+3.0f, -1.0f), depth, 1);
     #endif
 }
 
