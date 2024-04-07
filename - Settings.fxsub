@@ -18,10 +18,10 @@
 //           IBL(s) : 
 //=============================//
 #define _IBL  "IBL(s)/IBL.dds"  // Diffuse
-#define _IBL1 "IBL(s)/1.dds"   // Specular
-#define _IBL2 "IBL(s)/2.dds"   // Specular Rough
-#define _IBL3 "IBL(s)/3.dds"   // Specular Shadowed
-#define _IBL4 "IBL(s)/4.dds"   // Specular Shadowed Rough
+#define _IBL1 "IBL(s)/1_.dds"   // Specular
+#define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
+#define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
+#define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
 //================================================================//
 
 float4 g_npr_param[8] = {
