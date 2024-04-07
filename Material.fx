@@ -15,7 +15,7 @@
 #define _Translucency "MAP(s)/F_DIVA_ALPHA.png"
 #define _Transparency "MAP(s)/F_DIVA_ALPHA.png"
 
-//#define PMX_Color   //Standard MMD material
+bool PMX_Color = 0;  //Standard MMD material
 //====== General: ======//
 #define Diffuse float4(1, 1, 1, 1)
 #define Ambient float4(1, 1, 1, 1)
