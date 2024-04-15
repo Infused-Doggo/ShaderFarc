@@ -88,7 +88,7 @@ sampler2D SSSS = sampler_state {
 texture2D ANISO_SF : OFFSCREENRENDERTARGET
 <
     string Description = "(ANISO) U/V/Radial Array";
-
+    float2 ViewPortRatio = {1.0f, 1.0f};
     float4 ClearColor = {1.0f, 1.0f, 1.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -125,8 +125,7 @@ sampler2D Aniso = sampler_state {
 //=== DEPTH ===//
 texture DEPTH_SF : OFFSCREENRENDERTARGET
 <   string Description = "ShaderFarc Depth";
-    int Width  = 1080;
-    int Height = 720;
+    float2 ViewPortRatio = {1.0f, 1.0f};
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -217,24 +216,8 @@ float4 ps_expand(vs_out i) : COLOR0
   float4 o0 = 0;
   
   r0.xyzw = tex2D(Expand_S, v1.xy).xyzw;
-  r1.x = cmp(r0.w == 1.000000);
-  if (r1.x != 0) {
-    o0.xyz = r0.xyz;
-    o0.w = 1;
-    return o0;
-  }
-  r1.xyzw = tex2D(Expand_S, v2.xy).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(Expand_S, v2.zw).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(Expand_S, v3.xy).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  r0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
-  r1.xyzw = tex2D(Expand_S, v3.zw).xyzw;
-  r2.x = cmp(r0.w < r1.w);
-  o0.xyzw = r2.xxxx ? r1.xyzw : r0.xyzw;
+  
+  o0.xyzw = r0.xyzw;
   return o0;
 }
 
