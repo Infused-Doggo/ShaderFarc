@@ -12,6 +12,7 @@ static const float4 g_framebuffer_size = float4(1 + ViewportOffset.xyxy);
 #define SF_X "ShaderFarc.x"
 bool SF_Valid : CONTROLOBJECT < string name = SF_X; >;
 
+
 float4x4 IBL_Controller : CONTROLOBJECT < string name = Controller; string item = IBLDirection ; >;
 
 static float3 IBL_Dir = IBL_Controller._41_42_43;
@@ -257,34 +258,5 @@ float2 gl_FragCoord;
     #define NPR_DEF 1
 #endif
 	
-#include "- Shaders/#Include/+ HgShadow.fxh"
-
-#if SHADER_TYPE == 0
-	#include "- Shaders/item_blinn.fxsub"
-#elif SHADER_TYPE == 1
-	#if NPR
-		#include "- Shaders/skin_npr1.fxsub"
-	#else
-		#include "- Shaders/skin_default.fxsub"
-	#endif
-#elif SHADER_TYPE == 2
-	#if NPR
-		#include "- Shaders/cloth_npr1.fxsub"
-	#elif ANISO == 1
-		#include "- Shaders/cloth_aniso.fxsub"
-	#else
-		#include "- Shaders/cloth_default.fxsub"
-	#endif
-#elif SHADER_TYPE == 3
-	#include "- Shaders/tights.fxsub"
-#elif SHADER_TYPE == 4
-	#if NPR
-		#include "- Shaders/hair_npr1.fxsub"
-	#else
-		#include "- Shaders/hair_default.fxsub"
-	#endif
-#elif SHADER_TYPE == 5
-	#include "- Shaders/glass_eye.fxsub"
-#elif SHADER_TYPE == 6
-	#include "- Shaders/sss_skin.fxsub"
-#endif
+#include "+/+ HgShadow.fxh"
+#include "+/sss_skin.fxsub"

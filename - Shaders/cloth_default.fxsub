@@ -304,7 +304,7 @@ float4 ps_model(vs_out i) : COLOR0
 	float4 result;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
     float4 col0 = tex2D(g_diffuse_s, frg_texcoord.xy);
-    col0.rgb *= g_texture_color_coefficients.x;
+    col0.rgb *= g_tex2D_color_coefficients.x;
 
     float4 tmp;
     if (TRANSPARENCY) { // #if TRANSPARENCY_DEF
@@ -381,7 +381,7 @@ float4 ps_model(vs_out i) : COLOR0
     spec_ratio.rgb *= tmp.y + g_fresnel_coefficients.y;
     spec_ratio.a *= tmp.y * 10.0 + 1.0;
 
-    spec_ratio += g_texture_color_coefficients.w;
+    spec_ratio += g_tex2D_color_coefficients.w;
 
     float3 diff = get_ibl_diffuse(g_ibl_diffuse_s, normal, lc.y);
 

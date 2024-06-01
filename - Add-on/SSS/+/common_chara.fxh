@@ -39,74 +39,10 @@ static float4 g_fade_color = float4(0.00, 0.00, 0.00, 0.00);
 static float4 g_tone_scale = float4(set(R_ScaleA, R_ScaleB), set(G_ScaleA, G_ScaleB), set(B_ScaleA, B_ScaleB), 0.00);
 static float4 g_tone_offset = float4(set2(R_OffsetA, R_OffsetB), set2(G_OffsetA, G_OffsetB), set2(B_OffsetA, B_OffsetB), 0.66667);
 
-#define _ramp "- Shaders/#Include/Tonemap.dds"
-texture2D RampTex <string ResourceName = _ramp;
-	string Format = "A16B16G16R16F";>;
-sampler2D g_ramp_s = sampler_state {
-	texture = <RampTex>;
-    MINFILTER = LINEAR;
-    MAGFILTER = LINEAR;
-    MIPFILTER = LINEAR;
-    ADDRESSU  = CLAMP;
-    ADDRESSV  = CLAMP;
-};
-
-shared texture2D g_tonemap : RENDERCOLORTARGET <
-	string Format = "A16B16G16R16F";>;
-sampler2D g_tonemap_s = sampler_state {
-	texture = <g_tonemap>;
-    MINFILTER = LINEAR;
-    MAGFILTER = LINEAR;
-    MIPFILTER = LINEAR;
-    ADDRESSU  = CLAMP;
-    ADDRESSV  = CLAMP;
-};
-
-bool TM_x : CONTROLOBJECT < string name = "ToneMap.x"; >;
 
 float3 apply_tonemap(float3 color) {
 
-	float3 o0;
-	float3 r0;
-	float4 r1;
-	float4 r2;
-	float3 r3;
-	float3 r4;
-	
-	
-	g_tone_scale.xyz = g_tone_scale.xyz * 1.1;
-	g_tone_offset.xyz = g_tone_offset.xyz * lerp(1.1, -1.1, (int)Override_TM);
-  float2 v3 = float2(g_exposure.x, g_exposure.y * g_exposure.x);
-  r0 = color;
-  r0.y = dot(r0.xyz, float3(0.300000012,0.589999974,0.109999999));
-  r0.xz = r0.xz + -r0.yy;
-  r1.x = v3.y * r0.y;
-  r1.y = 0;
-  if(SF_Valid) {
-  r1.xy = tex2Dlod(g_tonemap_s, float4(r1.xy, 0, 0)).yx;
-  } else {
-  r1.xy = tex2Dlod(g_ramp_s, float4(r1.xy, 0, 0)).yx;
-  }
-  r0.y = v3.x * r1.x;
-  r1.xz = r0.yy * r0.xz;
-  r0.xz = r0.yy * r0.xz + r1.yy;
-  r0.y = dot(r1.xyz, float3(-0.508475006,1,-0.186441004));
-  r0.xyz = saturate(r0.xyz * g_tone_scale.xyz + g_tone_offset.xyz);
-  r1.x = (0 < g_fade_color.w);
-  r1.yzw = g_fade_color.xyz + -r0.xyz;
-  r1.yzw = g_fade_color.www * r1.yzw + r0.xyz;
-  r2.xy = (g_tone_scale.ww == float2(0,2));
-  r3.xyz = g_fade_color.xyz + r0.xyz;
-  r4.xyz = g_fade_color.xyz * r0.xyz;
-  r2.yzw = r2.yyy ? r3.xyz : r4.xyz;
-  r1.yzw = r2.xxx ? r1.yzw : r2.yzw;
-  o0.xyz = r1.xxx ? r1.yzw : r0.xyz;
-  
-  if(TM_x) {
-  o0 = color*0.8;
-  }
-  
-  return o0;
+  return color;
 }
 
 float3 apply_chara_color(float3 color) {
@@ -127,7 +63,7 @@ float2 get_chara_shadow(sampler2D tex, float3 normal, float3 texcoord) {
     _tmp0.x = tex2D(tex, texcoord.xy).x;
     _tmp0.x = (_tmp0.x - texcoord.z) * g_esm_param.x;
 	
-	_tmp0.x = HgShadow_GetSelfShadowRate(gl_FragCoord);
+	_tmp0.x = HgShadow_GetSelfShadowRate(gl_FragCoord);;
 	
     //_tmp0.x = exp2(_tmp0.x * g_material_state_emission.w);
     _tmp0.y = dot(g_light_chara_dir.xyz, normal) + 1.0;

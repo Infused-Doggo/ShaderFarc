@@ -243,8 +243,8 @@ float4 ps_model(vs_out i) : COLOR0
 	gl_FragCoord.xy = i.fragcoord;
 	float4 result;
 	
-	g_joint = inverse(EyeJointController);
-	g_joint_inverse = (EyeJointController);
+	g_joint = (EyeJointController);
+	g_joint_inverse = inverse(EyeJointController);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 	result = float4(1.0, 0.0, 0.0, 1.0);
 
@@ -294,7 +294,7 @@ float4 ps_model(vs_out i) : COLOR0
         float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, ray).rgb;
 
         ibl_spec = lerp(ibl_spec_shad, ibl_spec, lc);
-        ibl_spec *= g_light_env_chara_specular.rgb;
+        ibl_spec *= g_light_env_chara_specular.rgb * 0.34;
 
         diff = lerp(ibl_spec, diff, 0.94);
         diff += col2;
@@ -316,7 +316,8 @@ float4 ps_model(vs_out i) : COLOR0
     pos_cornea1.z = tmp.z > 1e-06 ? tmp.z * rsqrt(tmp.z) : pos_cornea1.z;
 
     float3 nrm_cornea1 = normalize(pos_cornea1.xyz * g_ellipsoid_radius.xyz * 2.0);
-    nrm_cornea1 = mul(nrm_cornea1, (float3x3)g_joint);
+    nrm_cornea1 = mul(nrm_cornea1 * float3(-1, -1, 1), (float3x3)g_joint);
+	nrm_cornea1 = reflect(reflect(nrm_cornea1, float3(-1, 0, 0)), float3(0, -1, 0));
 
     float2 cosine;
     cosine.x = clamp(dot(eye, nrm_cornea1), 0.0, 1.0);
@@ -334,7 +335,8 @@ float4 ps_model(vs_out i) : COLOR0
     spec1.a = min(spec1.a, g_material_state_specular.a * 2.0);
 
     float3 ray = nrm_cornea1 * (cosine.x * g_refract1.z - cosine.y);
-    ray = mul((ray - eye * g_refract1.z), (float3x3)g_joint_inverse);
+    ray = mul((ray - eye * g_refract1.z) * float3(-1, -1, 1), (float3x3)g_joint_inverse);
+	ray = reflect(reflect(ray, float3(-1, 0, 0)), float3(0, -1, 0));
 
     float3 _ftmp0 = ray * g_iris_radius.xyz;
     float3 coef;
@@ -364,7 +366,7 @@ float4 ps_model(vs_out i) : COLOR0
     tmp.xy *= float2(-1.0, -1.0);
     tmp.xy += float2(1.0, 0.0);
 
-    float3 col0 = tex2D(g_diffuse_s, tmp.xy).rgb;
+    float3 col0 = tex2D(g_diffuse_s, tmp.xy).rgb * 0.75;
     float3 col1 = col0;
     pos_cornea1.z = pos_cornea1.z - g_tex_scale.w;
 
@@ -409,7 +411,8 @@ float4 ps_model(vs_out i) : COLOR0
             float4 pos_pupil = float4(ray * tmp.y, 0.0) + pos_cornea1;
             float3 nrm_pupil = normalize(pos_pupil.xyz * g_pupil_radius.xyz * 2.0);
 
-            rot_ray = mul(mul(reflect(ray, nrm_pupil), (float3x3)g_joint), (float3x3)g_normal_tangent_transforms);
+            rot_ray = mul(reflect(ray, nrm_pupil) * float3(-1, -1, 1), (float3x3)g_joint);
+			rot_ray = mul(reflect(reflect(rot_ray, float3(-1, 0, 0)), float3(0, -1, 0)), (float3x3)g_normal_tangent_transforms);
 
             spec3 = texCUBE(g_ibl_specular_s, rot_ray).rgb;
 
@@ -424,7 +427,8 @@ float4 ps_model(vs_out i) : COLOR0
         spec2.w = clamp(dot(col1, col1) * 0.2 - 0.02, 0.0, 1.0);
     } // #endif
 
-    rot_ray = mul(mul(nrm_iris, (float3x3)g_joint), (float3x3)g_normal_tangent_transforms);
+    rot_ray = mul(nrm_iris * float3(-1, -1, 1), (float3x3)g_joint);
+	rot_ray = mul(reflect(reflect(rot_ray, float3(-1, 0, 0)), float3(0, -1, 0)), (float3x3)g_normal_tangent_transforms);
 
     float3 diff = get_ibl_diffuse(g_ibl_diffuse_s, rot_ray, lc);
 
@@ -497,7 +501,8 @@ float4 ps_model(vs_out i) : COLOR0
 
     rot_ray = nrm_cornea2 * (cosine.x * g_refract2.z - cosine.y);
     rot_ray -= ray * g_refract2.z;
-    rot_ray = mul(mul(-rot_ray, (float3x3)g_joint), (float3x3)g_normal_tangent_transforms);
+    rot_ray = mul(-rot_ray * float3(-1, -1, 1), (float3x3)g_joint);
+	rot_ray = mul(reflect(reflect(rot_ray, float3(-1, 0, 0)), float3(0, -1, 0)), (float3x3)g_normal_tangent_transforms);
 
     float3 ibl_spec = texCUBE(g_ibl_specular_s, rot_ray).rgb;
     float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, rot_ray).rgb;
