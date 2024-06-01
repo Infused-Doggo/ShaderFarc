@@ -106,7 +106,7 @@ float3 Light_Position(float3 pos_dir)
 	
 }
 
-static float3x3 g_normal_tangent_transforms = NormalTransform(float3(-0.594598, 0.392729, 0.701582), lerp(-Light_Direction.xyz * float3(1, 1, -1), IBL_Dir, (int)Override));
+static float3x3 g_normal_tangent_transforms = NormalTransform(IBL_Direction, lerp(-Light_Direction.xyz * float3(1, 1, -1), IBL_Dir, (int)Override));
 
 // 座法変換行列
 

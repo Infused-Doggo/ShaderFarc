@@ -22,6 +22,9 @@
 #define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
 #define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
 #define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
+
+#define IBL_Color float3(0.316218, 0.316218, 0.316218)
+#define IBL_Direction float3(-0.594598, 0.392729, 0.701582)
 //================================================================//
 
 float4 g_npr_param[8] = {
