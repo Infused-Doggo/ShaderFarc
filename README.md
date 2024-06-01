@@ -1,7 +1,5 @@
 # ShaderFarc: Bringing Project DIVA Graphics to MME
 
-![ShaderFarc Preview](https://media.discordapp.net/attachments/830105650403082331/1203105805637914696/Shader_Farc_Render_Release.png?ex=65cfe298&is=65bd6d98&hm=8045a0e5ea5429626240326488f352279339de283f6ec53d95e6c1772dcee644&=&format=webp&quality=lossless)
-
 Welcome to ShaderFarc, a shader dedicated to bring the visual graphics of Project DIVA Arcade into MME. Elevate your visuals with a collection of shaders tailored for various elements of your models.
 
 ## Shaders Available:
