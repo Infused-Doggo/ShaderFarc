@@ -84,7 +84,7 @@ bool PMX_Color = 0;  //Standard MMD material
 //====== Blend Flags: ======//
 #define Alpha_texture 0
 #define Material_texture 0
-#define Punch_through 0
+#define Punch_through 1
 #define Double_sided 0
 #define Normal_direction 0
 // - - - - - - - - - - -
