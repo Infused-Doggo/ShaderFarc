@@ -1,0 +1,517 @@
+//============================================================================//
+//Shader "hair_default"
+//============================================================================//
+// - - - - - - - - - - -
+#include "- Shaders/#Include/common.fxh"
+#include "- Shaders/#Include/common_scene.fxh"
+#include "- Shaders/#Include/common_chara.fxh"
+// - - - - - - - - - - -
+//  Textures / Samplers  :
+//=== Diffuse ===//
+texture2D g_diffuse: MATERIALTEXTURE;
+sampler2D g_diffuse_s = sampler_state {
+    texture = <g_diffuse>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Translucency ===//
+texture2D g_translucency <string ResourceName = _Translucency;>;
+sampler2D g_translucency_s = sampler_state {
+    texture = <g_translucency>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Normal ===//
+texture2D g_normal <string ResourceName = _Normal;>;
+sampler2D g_normal_s = sampler_state {
+    texture = <g_normal>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Specular ===//
+texture2D g_specular <string ResourceName = _Specular;>;
+sampler2D g_specular_s = sampler_state {
+    texture = <g_specular>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Transparency ===//
+texture2D g_transparency <string ResourceName = _Transparency;>;
+sampler2D g_transparency_s = sampler_state {
+    texture = <g_transparency>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;};
+//=== IBL Diffuse ===//
+textureCUBE g_ibl_diffuse <string ResourceName = _IBL;
+	string Format = "A16B16G16R16F";>;
+sampler g_ibl_diffuse_s = sampler_state {
+    Texture = <g_ibl_diffuse>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = POINT;
+	ADDRESSU  = WRAP;
+	ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== ANISO ===//
+shared texture2D g_aniso : RENDERCOLORTARGET;
+sampler2D g_aniso_s = sampler_state {
+    texture = <g_aniso>;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = LINEAR;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+};
+//=== Shadow ===//
+texture2D g_shadow_depth0;
+sampler2D g_shadow_depth0_s = sampler_state {
+    texture = <g_shadow_depth0>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//=== Effect ===//
+texture2D g_effect;
+sampler2D g_effect_s = sampler_state {
+    texture = <g_effect>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//============================================================================//
+//  Base Structure  :
+struct vs_in
+{
+	float3 a_position  : POSITION0;
+	float3 a_normal    : NORMAL0;  
+	float4 a_tangent   : TEXCOORD3;
+	float2 a_texcoord0 : TEXCOORD0;
+	float2 a_texcoord1 : TEXCOORD1;
+};
+struct vs_out
+{
+	float4 position         : SV_POSITION;
+	float3 vertcoord        : TEXCOORD0;
+	float2 fragcoord        : TEXCOORD1;
+	float4 fog_color        : TEXCOORD2; //xyz=fog_color, w=fog
+	float4 texcoord         : TEXCOORD3; //xy=texcoord0, zw=texcoord1
+	float3 texcoord_shadow0 : TEXCOORD4;
+	float3 tangent          : TANGENT0 ;
+	float3 binormal         : BINORMAL0;
+	float4 normal           : NORMAL0  ; //xyz=normal, w=fresnel
+	float4 eye              : TEXCOORD8; //xyz=eye, w=face_offset
+	float3 aniso_tangent    : TEXCOORD9;
+};
+//============================================================================//
+//  Vertex Shader(s)  :
+vs_out vs_model (vs_in i)
+{
+    vs_out o = (vs_out)0;
+// - - - - - - - - - - - - - - - - - - - - //
+	float3 a_position  = i.a_position;
+	float3 a_normal    = i.a_normal;
+	float4 a_tangent   = i.a_tangent;
+	float2 a_texcoord0 = i.a_texcoord0;
+	float2 a_texcoord1 = i.a_texcoord0;
+// - - - - - - - - - - - - - - - - - - - - //
+	float4 pos_w;
+    float3 normal_w;
+    float3 tangent_w;
+    float4 pos_c;
+    float3 normal_v;
+	
+        pos_w.xyz = mul(float4(a_position, 1.0), g_worlds).xyz;
+        pos_w.w = 1.0;
+        normal_w = mul(a_normal, (float3x3)g_worlds);
+        tangent_w = mul(a_tangent.xyz, (float3x3)g_worlds);
+
+        normal_v = mul(a_normal, (float3x3)g_worldview);
+        pos_c = mul(float4(a_position, 1.0), g_transforms);
+
+    o.position = pos_c;
+	
+	o.vertcoord = pos_w.xyz;
+	
+	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
+    1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
+	o.fragcoord = fragcoord.xy;
+	
+	if (NORMAL) { // #if NORMAL_DEF
+        float3 binormal_w = cross(normal_w, tangent_w) * a_tangent.w;
+
+        o.normal.xyz = normal_w;
+        o.tangent = tangent_w;
+        o.binormal = binormal_w;
+
+        if (ANISO_3) { // #if ANISO_3_DEF
+            float3 t_normal_w;
+            float2 tmp;
+            tmp.x = binormal_w.x;
+            tmp.y = tangent_w.y;
+            t_normal_w.x = tangent_w.z;
+            t_normal_w.y = binormal_w.z;
+            tangent_w.y = tmp.x;
+            tangent_w.z = normal_w.x;
+            binormal_w.x = tmp.y;
+            binormal_w.z = normal_w.y;
+            t_normal_w.z = normal_w.z;
+
+            float3 aniso_tangent;
+            aniso_tangent.xy = a_texcoord0 * 2.0 - 1.0;
+            aniso_tangent.z = 0.01;
+            o.aniso_tangent.x = dot(tangent_w, aniso_tangent);
+            o.aniso_tangent.y = dot(binormal_w, aniso_tangent);
+            o.aniso_tangent.z = dot(t_normal_w, aniso_tangent);
+        }
+        else if (ANISO_2) { // #elif ANISO_2_DEF
+            o.aniso_tangent = binormal_w;
+        }
+        else if (ANISO_1) { // #elif ANISO_1_DEF
+            o.aniso_tangent = tangent_w;
+        } // #endif
+    }
+    else { // #else
+        o.normal.xyz = normal_w;
+    } // #endif
+
+    float4 texcoord0 = float4(a_texcoord0, 0.0, 1.0);
+    float4 texcoord1 = float4(a_texcoord1, 0.0, 1.0);
+    o.texcoord.xy = texcoord0 * g_texcoord_transforms[0];
+    o.texcoord.zw = texcoord1 * g_texcoord_transforms[1];
+
+    if (SHADOW) { // #if SHADOW_DEF
+        o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[1];
+    }
+    else { // #else
+        o.texcoord_shadow0 = pos_w * g_self_shadow_receivers[0];
+    } // #endif
+
+    float4 eye_w;
+    eye_w.xyz = g_view_position.xyz - pos_w.xyz;
+    o.eye.xyz = eye_w.xyz;
+
+    eye_w.xyz = normalize(eye_w.xyz);
+
+    eye_w.w = dot(eye_w.xyz, normal_w);
+    o.normal.xyz += eye_w.xyz * eye_w.w * -1.02 * float(eye_w.w < 0.0);
+
+    float2 diff;
+    diff.x = pow(clamp(dot(normal_v, float3(0.0, 0.0, 1.0)), 0.0, 1.0), 0.4);
+    diff.y = clamp(dot(-eye_w.xyz, g_light_chara_dir.xyz) * 0.5 + 0.5, 0.0, 1.0);
+    diff.y *= diff.x;	
+    diff.xy *= g_light_face_diff.xy;
+    o.eye.w = diff.x + diff.y;
+
+    float2 luce;
+    luce.x = clamp(dot(-eye_w.xyz, g_light_chara_dir.xyz), 0.0, 1.0);
+    luce.x += pow(luce.x, 8.0);
+    luce.y = dot(normal_w, g_light_chara_dir.xyz) + 1.0;
+    luce.y = clamp(luce.y * luce.y, 0.0, 1.0);
+    o.normal.w = luce.x * luce.y * g_fresnel_coefficients.z;
+	
+    if (FOG_2) { // #if FOG_2_DEF
+        float2 fog;
+        fog.x = tex2Dlod(g_effect_s, float4(pos_w.xz * float2(0.0625, -0.0625) + 0.5, 0, 0)).x * 3.0 + 1.0;
+        fog.y = clamp((pos_w.y + g_fog_height_params.y) * g_fog_height_params.w + 1.0, 0.0, 1.0);
+        o.fog_color.w = (1.0 - pow(fog.y, fog.x)) * g_fog_height_params.x;
+        o.fog_color.rgb = g_fog_height_color.rgb;
+    }
+    else if (FOG_1) { // #elif FOG_1_DEF
+        o.fog_color.w = clamp((pos_c.z - g_fog_state_params.y)
+            * g_fog_state_params.w, 0.0, 1.0) * g_fog_state_params.x;
+        o.fog_color.rgb = g_fog_depth_color.rgb;
+    }
+    else { // #else
+        o.fog_color = (0.0);
+    } // #endif
+	return o;
+}
+//============================================================================//
+// Fragment Shader(s) :
+float4 ps_model(vs_out i) : COLOR0
+{
+	float4x4 Frame = CTF(i.vertcoord, i.normal, i.texcoord);
+	float4 frg_fog_color = i.fog_color; //xyz=fog_color, w=fog
+	float4 frg_texcoord = i.texcoord; //xy=texcoord0, zw=texcoord1
+	float3 frg_texcoord_shadow0 = i.texcoord_shadow0;
+	float3 frg_tangent = Frame[0].xyz;
+	float3 frg_binormal = Frame[1].xyz;
+	float4 frg_normal = Frame[2]; //xyz=normal, w=fresnel
+	float4 frg_eye = i.eye; //xyz=eye, w=face_offset
+	float3 frg_aniso_tangent = i.aniso_tangent;
+	
+	if (ANISO_3) { // #if ANISO_3_DEF
+        float3 t_normal_w;
+		float3 tangent_w = frg_tangent;
+		float3 binormal_w = frg_binormal;
+        float2 aniso_tmp;
+		aniso_tmp.x = frg_binormal.x;
+		aniso_tmp.y = frg_tangent.y;
+		t_normal_w.x = frg_tangent.z;
+		t_normal_w.y = frg_binormal.z;
+		tangent_w.y = aniso_tmp.x;
+		tangent_w.z = frg_normal.x;
+		binormal_w.x = aniso_tmp.y;
+		binormal_w.z = frg_normal.y;
+		t_normal_w.z = frg_normal.z;
+
+		float3 aniso_tangent;
+		aniso_tangent.xy = frg_texcoord.xy * 2.0 - 1.0;
+		aniso_tangent.z = 0.01;
+		frg_aniso_tangent.x = dot(tangent_w, aniso_tangent);
+		frg_aniso_tangent.y = dot(binormal_w, aniso_tangent);
+		frg_aniso_tangent.z = dot(t_normal_w, aniso_tangent);
+    }
+    else if (ANISO_2) { // #elif ANISO_2_DEF
+		frg_aniso_tangent = frg_binormal;
+	}
+	else if (ANISO_1) { // #elif ANISO_1_DEF
+		frg_aniso_tangent = frg_tangent;
+	}
+	else {
+		frg_aniso_tangent = frg_binormal;
+	} // #endif
+//============================================================================//
+	gl_FragCoord.xy = i.fragcoord;
+	float4 result;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+    float4 tmp;
+    tmp.xy = tex2D(g_normal_s, frg_texcoord.xy).xy * 2.0 - 1.0;
+    tmp.zw = tmp.xy * tmp.xy * tmp.xy;
+    tmp *= float4(1.5, 1.5, 2.0, 2.0);
+    tmp.xy += tmp.w;
+
+    float3 normal = frg_normal.xyz;
+    normal += frg_tangent * tmp.x;
+    normal += frg_binormal * tmp.y;
+    normal = normalize(normal);
+
+    float3 eye = normalize(frg_eye.xyz);
+
+    float lc;
+    //#if U16_DEF
+        if (SELF_SHADOW) { // #if SELF_SHADOW_DEF
+            lc = get_chara_shadow(g_shadow_depth0_s, normal, frg_texcoord_shadow0).y;
+        }
+        else { // #else
+            lc = 1.0;
+        } // #endif
+    //#else
+    //    lc = 1.0;
+    //#endif
+
+    tmp.x = clamp(dot(normal, eye), 0.0, 1.0);
+    float3 luce = g_light_chara_luce.rgb * pow(tmp.x * -tmp.x + 1.0, 8.0) * frg_normal.w;
+
+    if (TRANSLUCENCY) { // #if TRANSLUCENCY_DEF
+        tmp = tex2D(g_translucency_s, frg_texcoord.zw);
+        luce *= tmp.rgb;
+    } // #endif
+
+    luce *= lc;
+
+    float3 rot_normal = mul(normal, (float3x3)g_normal_tangent_transforms);
+    float3 diff = get_ibl_diffuse(g_ibl_diffuse_s, rot_normal, lc);
+
+    diff *= g_light_env_chara_diffuse.rgb;
+    diff += frg_eye.w;
+    diff += g_light_env_chara_ambient.rgb;
+
+    if (TONE_CURVE) { // #if TONE_CURVE_DEF
+        diff += get_tone_curve(normal);
+    } // #endif
+
+    float4 col0 = tex2D(g_diffuse_s, frg_texcoord.xy);
+    diff *= col0.rgb * g_texture_color_coefficients.x;
+
+    float3 aniso_tangent = normalize(frg_aniso_tangent);
+    aniso_tangent = normalize(aniso_tangent - dot(aniso_tangent, normal) * normal);
+
+    tmp.x = dot(aniso_tangent, g_light_chara_dir.xyz);
+    tmp.y = dot(aniso_tangent, eye);
+    tmp.z = -tmp.x;
+    tmp.xyzw = tmp.xyxz * tmp.xyyy + float4(-1.01, -1.01, 0.0, 0.0);
+
+    tmp.xy = -tmp.xy * rsqrt(-tmp.xy);
+    tmp.yz = clamp(tmp.xx * tmp.yy - tmp.zw, 0.0, 1.0);
+	//============================================================================//
+	if (SF_Valid) {
+		tmp.xyz = tex2D(g_aniso_s, gl_FragCoord.xy + ViewportOffset.xy).rgb; }
+	//============================================================================//
+    tmp.yz = pow(tmp.yz, g_shininess.xx);
+
+    diff *= tmp.x * tmp.x * 0.25 + 0.75;
+    diff += luce * 0.5;
+
+    float2 aniso_coef;
+    aniso_coef = (dot(normal, g_light_chara_dir.xyz)) * float2(0.7, -0.7) + float2(0.3, 0.3);
+    aniso_coef = tmp.yz * clamp(aniso_coef, (0.0), (1.0)) * float2(0.18, 0.05);
+
+    float3 spec = g_light_chara_spec.rgb * aniso_coef.x * lc + g_light_chara_back.rgb * aniso_coef.y + g_texture_color_coefficients.w;
+    if (SPECULAR) { // #if SPECULAR_DEF
+        spec *= tex2D(g_specular_s, frg_texcoord.xy).rgb;
+    } // #endif
+
+    diff += spec * g_material_state_specular.rgb;
+
+    if (CHARA_COLOR) { // #if CHARA_COLOR_DEF
+        result.rgb = apply_chara_color(diff);
+    } // #endif
+    else { // #else
+        result.rgb = apply_fog_color(diff, frg_fog_color);
+    } // #endif
+
+    if (TRANSPARENCY) { // #if TRANSPARENCY_DEF
+        col0.a = tex2D(g_transparency_s, frg_texcoord.zw).x;
+    } // #endif
+
+    #if ALPHA_TEST_DEF
+        if (col0.a < min(g_max_alpha.z, 0.5))
+            discard;
+
+        result.a = g_max_alpha.z < 0.5 ? max(col0.a, g_max_alpha.w) : 1.0;
+    #else
+        result.a = max(col0.a, g_max_alpha.w);
+    #endif
+	return result * g_material;
+}
+//============================================================================//
+//  Technique(s)  : 
+technique MainTecBS0 < string MMDPass = "object_ss"; > {
+    pass DrawObject {	
+		#if Src_blend == 0
+			SRCBLEND = ZERO;
+		#elif Src_blend == 1
+			SRCBLEND = ONE;
+		#elif Src_blend == 2
+			SRCBLEND = SRCCOLOR;
+		#elif Src_blend == 3
+			SRCBLEND = INVSRCCOLOR;
+		#elif Src_blend == 4
+			SRCBLEND = SRCALPHA;
+		#elif Src_blend == 5
+			SRCBLEND = INVSRCALPHA;
+		#elif Src_blend == 6
+			SRCBLEND = DESTALPHA;
+		#elif Src_blend == 7
+			SRCBLEND = INVDESTALPHA;
+		#elif Src_blend == 8
+			SRCBLEND = DESTCOLOR;
+		#elif Src_blend == 9
+			SRCBLEND = INVDESTCOLOR;
+		#elif Src_blend == 10
+			SRCBLEND = SRCALPHASAT;
+		#endif
+
+		#if Dst_blend == 0
+			DESTBLEND = ZERO;
+		#elif Dst_blend == 1
+			DESTBLEND = ONE;
+		#elif Dst_blend == 2
+			DESTBLEND = SRCCOLOR;
+		#elif Dst_blend == 3
+			DESTBLEND = INVSRCCOLOR;
+		#elif Dst_blend == 4
+			DESTBLEND = SRCALPHA;
+		#elif Dst_blend == 5
+			DESTBLEND = INVSRCALPHA;
+		#elif Dst_blend == 6
+			DESTBLEND = DESTALPHA;
+		#elif Dst_blend == 7
+			DESTBLEND = INVDESTALPHA;
+		#elif Dst_blend == 8
+			DESTBLEND = DESTCOLOR;
+		#elif Dst_blend == 9
+			DESTBLEND = INVDESTCOLOR;
+		#elif Dst_blend == 10
+			DESTBLEND = SRCALPHASAT;
+		#endif
+		
+		#if Double_sided == 0
+			CULLMODE = CCW;
+		#elif Double_sided == 1
+			CULLMODE = NONE;
+		#endif
+		
+        VertexShader = compile vs_3_0 vs_model();
+        PixelShader  = compile ps_3_0 ps_model();
+    }
+}
+
+technique MainTec0 < string MMDPass = "object"; > {
+    pass DrawObject {	
+		#if Src_blend == 0
+			SRCBLEND = ZERO;
+		#elif Src_blend == 1
+			SRCBLEND = ONE;
+		#elif Src_blend == 2
+			SRCBLEND = SRCCOLOR;
+		#elif Src_blend == 3
+			SRCBLEND = INVSRCCOLOR;
+		#elif Src_blend == 4
+			SRCBLEND = SRCALPHA;
+		#elif Src_blend == 5
+			SRCBLEND = INVSRCALPHA;
+		#elif Src_blend == 6
+			SRCBLEND = DESTALPHA;
+		#elif Src_blend == 7
+			SRCBLEND = INVDESTALPHA;
+		#elif Src_blend == 8
+			SRCBLEND = DESTCOLOR;
+		#elif Src_blend == 9
+			SRCBLEND = INVDESTCOLOR;
+		#elif Src_blend == 10
+			SRCBLEND = SRCALPHASAT;
+		#endif
+
+		#if Dst_blend == 0
+			DESTBLEND = ZERO;
+		#elif Dst_blend == 1
+			DESTBLEND = ONE;
+		#elif Dst_blend == 2
+			DESTBLEND = SRCCOLOR;
+		#elif Dst_blend == 3
+			DESTBLEND = INVSRCCOLOR;
+		#elif Dst_blend == 4
+			DESTBLEND = SRCALPHA;
+		#elif Dst_blend == 5
+			DESTBLEND = INVSRCALPHA;
+		#elif Dst_blend == 6
+			DESTBLEND = DESTALPHA;
+		#elif Dst_blend == 7
+			DESTBLEND = INVDESTALPHA;
+		#elif Dst_blend == 8
+			DESTBLEND = DESTCOLOR;
+		#elif Dst_blend == 9
+			DESTBLEND = INVDESTCOLOR;
+		#elif Dst_blend == 10
+			DESTBLEND = SRCALPHASAT;
+		#endif
+		
+		#if Double_sided == 0
+			CULLMODE = CCW;
+		#elif Double_sided == 1
+			CULLMODE = NONE;
+		#endif
+		
+        VertexShader = compile vs_3_0 vs_model();
+        PixelShader  = compile ps_3_0 ps_model();
+    }
+}

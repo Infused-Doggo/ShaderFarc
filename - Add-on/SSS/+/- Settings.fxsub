@@ -11,28 +11,17 @@
 #define Controller "#ShaderFarc_Controller.pmx"
 #define IBLDirection "Chara_Position"
 
-#define Eyeball_Offset 1  // In case UV is one block above
-#define Eyeball_Flip 0    // Corrects the vertical orientation
+#define Eyeball_Offset 1  // Recommended for DIVA Heads
 #define SSS_Intensity 0.6
 
 //==============================//
 //           IBL(s) : 
 //=============================//
 #define _IBL  "IBL(s)/IBL.dds"  // Diffuse
-#define _IBL1 "IBL(s)/1_.dds"   // Specular
-#define _IBL2 "IBL(s)/2_.dds"   // Specular Rough
-#define _IBL3 "IBL(s)/3_.dds"   // Specular Shadowed
-#define _IBL4 "IBL(s)/4_.dds"   // Specular Shadowed Rough
-
-float4 IBL_Color[3] = {
-float4(1.801833, 1.801833, 1.801833, 1.00),
-float4(1.190262, 1.190262, 1.190262, 1.00),
-float4(0.888833, 0.888833, 0.888833, 1.00)};
-
-float4 IBL_Direction[3] = {
-float4(-0.594598, 0.392729, 0.701582, 1.00),
-float4(-0.594598, 0.392729, 0.701582, 1.00),
-float4(0.594598, -0.392729, -0.701582, 1.00)};
+#define _IBL1 "IBL(s)/1.dds"   // Specular
+#define _IBL2 "IBL(s)/2.dds"   // Specular Rough
+#define _IBL3 "IBL(s)/3.dds"   // Specular Shadowed
+#define _IBL4 "IBL(s)/4.dds"   // Specular Shadowed Rough
 //================================================================//
 
 float4 g_npr_param[8] = {

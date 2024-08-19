@@ -1,0 +1,263 @@
+////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  basic.fx ver2.0
+//  作成: 舞力介入P
+//
+////////////////////////////////////////////////////////////////////////////////////////////////
+// パラメータ宣言
+
+// 座法変換行列
+float4x4 WorldViewProjMatrix      : WORLDVIEWPROJECTION;
+float4x4 WorldMatrix              : WORLD;
+float4x4 LightWorldViewProjMatrix : WORLDVIEWPROJECTION < string Object = "Light"; >;
+
+float3   LightDirection    : DIRECTION < string Object = "Light"; >;
+float3   CameraPosition    : POSITION  < string Object = "Camera"; >;
+
+// マテリアル色
+float4   MaterialDiffuse   : DIFFUSE  < string Object = "Geometry"; >;
+float3   MaterialAmbient   : AMBIENT  < string Object = "Geometry"; >;
+float3   MaterialEmmisive  : EMISSIVE < string Object = "Geometry"; >;
+float3   MaterialSpecular  : SPECULAR < string Object = "Geometry"; >;
+float    SpecularPower     : SPECULARPOWER < string Object = "Geometry"; >;
+float3   MaterialToon      : TOONCOLOR;
+// ライト色
+float3   LightDiffuse      : DIFFUSE   < string Object = "Light"; >;
+float3   LightAmbient      : AMBIENT   < string Object = "Light"; >;
+float3   LightSpecular     : SPECULAR  < string Object = "Light"; >;
+static float4 DiffuseColor  = MaterialDiffuse  * float4(LightDiffuse, 1.0f);
+static float3 AmbientColor  = MaterialAmbient  * LightAmbient + MaterialEmmisive;
+static float3 SpecularColor = MaterialSpecular * LightSpecular;
+
+bool use_texture;  //テクスチャの有無
+bool use_toon;     //トゥーンの有無
+
+bool     parthf;   // パースペクティブフラグ
+bool     transp;   // 半透明フラグ
+#define SKII1    1500
+#define SKII2    8000
+#define Toon     3
+
+// オブジェクトのテクスチャ
+texture ObjectTexture: MATERIALTEXTURE;
+sampler ObjTexSampler = sampler_state
+{
+    texture = <ObjectTexture>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+};
+
+#if Use_Normal_Map == 1 
+texture Normal_T <string ResourceName = Normal_Map;>;
+#else
+texture Normal_T;
+#endif
+sampler Normal_S = sampler_state {
+    texture = <Normal_T>;
+    MINFILTER = ANISOTROPIC;
+    MAGFILTER = ANISOTROPIC;
+    MIPFILTER = ANISOTROPIC;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+	MAXANISOTROPY = 16;
+};
+
+float4x4 IBL_Controller : CONTROLOBJECT < string name = "#ShaderFarc_Controller.pmx"; string item = "Chara_Position" ; >;
+float Override : CONTROLOBJECT < string name = "#ShaderFarc_Controller.pmx"; string item = "Override";>;
+
+
+static float3 IBL_Dir = IBL_Controller._41_42_43;
+
+float3 Light_Position(float3 pos_dir)
+{
+		float flength = length(pos_dir);
+        if (flength <= 0.000001)
+            pos_dir = float3(0.0f, 1.0f, 0.0f);
+        else
+            pos_dir *= 1.0f / flength;
+        return pos_dir;
+	
+}
+
+static float4 g_light_chara_dir = float4(lerp(-LightDirection * float3(-1, -1, 1), Light_Position(-IBL_Dir), (int)Override), 1.0);
+
+float3x3 CTF(float3 N, float3 p, float2 uv)
+{
+	float3 dp1 = ddx( p );
+    float3 dp2 = ddy( p );
+    float2 duv1 = ddx( uv );
+    float2 duv2 = ddy( uv );
+
+	float3 dp2perp = cross( dp2, N );
+    float3 dp1perp = cross( N, dp1 );
+    float3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+    float3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+ 
+    // construct a scale-invariant frame 
+    float invmax = rsqrt( max( dot(T,T), dot(B,B) ) );
+    return float3x3( T * invmax, B * invmax, N );
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// オブジェクト描画（セルフシャドウOFF）
+
+// トゥーンマップのサンプラ。"register(s0)"なのはMMDがs0を使っているから
+sampler ToonTexSampler : register(s0);
+
+struct VS_OUTPUT
+{
+    float4 Pos        : POSITION;    // 射影変換座標
+    float2 Tex        : TEXCOORD1;   // テクスチャ
+    float3 Normal     : TEXCOORD2;   // 法線
+    float3 Eye        : TEXCOORD3;   // カメラとの相対位置
+    float3 Vertcoord  : TEXCOORD4;   // ###########
+    float4 Color      : COLOR0;      // ディフューズ色
+    float3 Specular   : COLOR1;      // スペキュラ色
+};
+
+// 頂点シェーダ
+VS_OUTPUT Basic_VS(float4 Pos : POSITION, float3 Normal : NORMAL, float2 Tex : TEXCOORD0)
+{
+    VS_OUTPUT Out = (VS_OUTPUT)0;
+    
+    // カメラ視点のワールドビュー射影変換
+    Out.Pos = mul( Pos, WorldViewProjMatrix );
+	Out.Vertcoord = mul( Pos, WorldMatrix );
+    
+    // カメラとの相対位置
+    Out.Eye = CameraPosition - mul( Pos, WorldMatrix );
+    // 頂点法線
+    Out.Normal = normalize( mul( Normal, (float3x3)WorldMatrix ) );
+    
+    // ディフューズ色＋アンビエント色 計算
+    Out.Color.rgb = saturate( max(0,dot( Out.Normal, -g_light_chara_dir )) * DiffuseColor.rgb + AmbientColor );
+    Out.Color.a = DiffuseColor.a;
+    
+    // テクスチャ座標
+    Out.Tex = Tex;
+    
+    // スペキュラ色計算
+    float3 HalfVector = normalize( normalize(Out.Eye) + -g_light_chara_dir );
+    Out.Specular = pow( max(0,dot( HalfVector, Out.Normal )), SpecularPower ) * SpecularColor;
+    
+    return Out;
+}
+
+// ピクセルシェーダ
+float4 Basic_PS( VS_OUTPUT IN ) : COLOR0
+{
+    float4 Color = IN.Color;
+    if ( use_texture ) {  //※このif文は非効率的
+        // テクスチャ適用
+        Color *= tex2D( ObjTexSampler, IN.Tex );
+    }
+	
+	float3x3 Frame = CTF(IN.Normal, IN.Eye, IN.Tex);
+	float2 frg_texcoord = IN.Tex;
+	float3 frg_normal = Frame[2].xyz;
+	float3 frg_eye = normalize(IN.Eye);
+	float3 frg_tangent = Frame[0].xyz;
+	float3 frg_binormal = Frame[1].xyz;
+	float3 frg_aniso_tangent;
+	
+	#if Aniso_Direction == 0
+		#define ANISO_1 1
+	#else
+		#define ANISO_1 0
+	#endif
+
+	#if Aniso_Direction == 1
+		#define ANISO_2 1
+	#else
+		#define ANISO_2 0
+	#endif
+
+	#if Aniso_Direction == 2
+		#define ANISO_3 1
+	#else
+		#define ANISO_3 0
+	#endif
+	
+		if (ANISO_3) { // #if ANISO_3_DEF
+            float3 t_normal_w;
+			float3 tangent_w = frg_tangent;
+			float3 binormal_w = frg_binormal;
+            float2 aniso_tmp;
+            aniso_tmp.x = frg_binormal.x;
+            aniso_tmp.y = frg_tangent.y;
+            t_normal_w.x = frg_tangent.z;
+            t_normal_w.y = frg_binormal.z;
+            tangent_w.y = aniso_tmp.x;
+            tangent_w.z = frg_normal.x;
+            binormal_w.x = aniso_tmp.y;
+            binormal_w.z = frg_normal.y;
+            t_normal_w.z = frg_normal.z;
+
+            float3 aniso_tangent;
+            aniso_tangent.xy = frg_texcoord.xy * 2.0 - 1.0;
+            aniso_tangent.z = 0.01;
+            frg_aniso_tangent.x = dot(tangent_w, aniso_tangent);
+            frg_aniso_tangent.y = dot(binormal_w, aniso_tangent);
+            frg_aniso_tangent.z = dot(t_normal_w, aniso_tangent);
+        }
+        else if (ANISO_2) { // #elif ANISO_2_DEF
+            frg_aniso_tangent = frg_binormal;
+        }
+        else if (ANISO_1) { // #elif ANISO_1_DEF
+            frg_aniso_tangent = frg_tangent;
+        } // #endif
+	
+	float4 tmp;
+	float3 normal;
+	#if Use_Normal_Map
+	tmp.xy = tex2D(Normal_S, frg_texcoord.xy).xy * 2.0 - 1.0;
+    tmp.zw = tmp.xy * tmp.xy * tmp.xy;
+    tmp *= float4(NM_Intensity, Flip_Y ? -NM_Intensity : NM_Intensity, 2.0, 2.0);
+    tmp.xy += tmp.w;
+
+    normal = frg_normal.xyz;
+    normal += frg_tangent * tmp.x;
+    normal += frg_binormal * tmp.y;
+    normal = normalize(normal);
+	#else
+	normal = IN.Normal;
+	#endif
+	
+    float3 aniso_tangent = normalize(frg_aniso_tangent);
+    aniso_tangent = normalize(aniso_tangent - dot(aniso_tangent, normal) * normal);
+	
+    tmp.x = dot(aniso_tangent, normalize(g_light_chara_dir.xyz* float3(-1, -1, 1)));
+    tmp.y = dot(aniso_tangent, frg_eye);
+    tmp.z = -tmp.x;
+    tmp.xyzw = tmp.xyxz * tmp.xyyy + float4(-1.01, -1.01, 0.0, 0.0);
+
+    tmp.xy = -tmp.xy * rsqrt(-tmp.xy);
+    tmp.yz = clamp(tmp.xx * tmp.yy - tmp.zw, 0.0, 1.0);
+	
+    Color.rgb = tmp.xyz;
+    return Color;
+}
+
+// オブジェクト描画用テクニック
+technique MainTec < string MMDPass = "object"; > {
+    pass DrawObject
+    {
+        VertexShader = compile vs_3_0 Basic_VS();
+        PixelShader  = compile ps_3_0 Basic_PS();
+    }
+}
+
+// オブジェクト描画用テクニック
+technique MainTecBS  < string MMDPass = "object_ss"; > {
+    pass DrawObject {
+        VertexShader = compile vs_3_0 Basic_VS();
+        PixelShader  = compile ps_3_0 Basic_PS();
+    }
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////
