@@ -17,7 +17,11 @@ sampler2D g_diffuse_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Translucency ===//
-texture2D g_translucency <string ResourceName = _Translucency;>;
+#ifdef _Translucency
+	texture2D g_translucency <string ResourceName = _Translucency;>;
+#else
+	texture2D g_translucency;
+#endif
 sampler2D g_translucency_s = sampler_state {
     texture = <g_translucency>;
     FILTER= ANISOTROPIC;
@@ -26,7 +30,6 @@ sampler2D g_translucency_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Normal ===//
-texture2D g_normal <string ResourceName = _Normal;>;
 sampler2D g_normal_s = sampler_state {
     texture = <g_normal>;
     FILTER= ANISOTROPIC;
@@ -35,7 +38,6 @@ sampler2D g_normal_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Specular ===//
-texture2D g_specular <string ResourceName = _Specular;>;
 sampler2D g_specular_s = sampler_state {
     texture = <g_specular>;
     FILTER= ANISOTROPIC;
@@ -44,13 +46,13 @@ sampler2D g_specular_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Transparency ===//
-texture2D g_transparency <string ResourceName = _Transparency;>;
 sampler2D g_transparency_s = sampler_state {
     texture = <g_transparency>;
     FILTER= ANISOTROPIC;
     AddressU  = WRAP;
     AddressV  = WRAP;
-	MAXANISOTROPY = 16;};
+	MAXANISOTROPY = 16;
+};
 //=== IBL Diffuse ===//
 textureCUBE g_ibl_diffuse <string ResourceName = _IBL;
 	string Format = "A16B16G16R16F";>;

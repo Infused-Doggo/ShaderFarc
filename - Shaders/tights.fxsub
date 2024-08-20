@@ -17,7 +17,6 @@ sampler2D g_diffuse_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Normal ===//
-texture2D g_normal <string ResourceName = _Normal;>;
 sampler2D g_normal_s = sampler_state {
     texture = <g_normal>;
     FILTER= ANISOTROPIC;
@@ -26,7 +25,6 @@ sampler2D g_normal_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Specular ===//
-texture2D g_specular <string ResourceName = _Specular;>;
 sampler2D g_specular_s = sampler_state {
     texture = <g_specular>;
     FILTER= ANISOTROPIC;
@@ -35,7 +33,6 @@ sampler2D g_specular_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Transparency ===//
-texture2D g_transparency <string ResourceName = _Transparency;>;
 sampler2D g_transparency_s = sampler_state {
     texture = <g_transparency>;
     FILTER= ANISOTROPIC;
@@ -44,7 +41,6 @@ sampler2D g_transparency_s = sampler_state {
 	MAXANISOTROPY = 16;
 };
 //=== Environment ===//
-textureCUBE g_envmap <string ResourceName = _Env_Map;>;
 sampler g_envmap_s = sampler_state {
     Texture = <g_envmap>;
     MINFILTER = LINEAR;

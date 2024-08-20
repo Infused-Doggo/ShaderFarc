@@ -146,6 +146,36 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 
 #define U18 0 //???
 
+  //====================  Textures  =====================//
+//=== Normal ===//
+#ifdef _Normal
+	texture2D g_normal <string ResourceName = _Normal;>;
+#else
+	texture2D g_normal;
+#endif
+
+//=== Specular ===//
+#ifdef _Specular
+	texture2D g_specular <string ResourceName = _Specular;>;
+#else
+	texture2D g_specular;
+#endif
+
+//=== Environment ===//
+#ifdef _Env_Map
+	textureCUBE g_envmap <string ResourceName = _Env_Map;>;
+#else
+	textureCUBE g_envmap;
+#endif
+
+//=== Transparency ===//
+#ifdef _Transparency
+	texture2D g_transparency <string ResourceName = _Transparency;>;
+#else
+	texture2D g_transparency;
+#endif
+  //=====================================================//
+
       #include "- Shaders/#Include/+ HgShadow.fxh"
   //=====================  Shaders  =====================//
 #if SHADER_TYPE == 0
