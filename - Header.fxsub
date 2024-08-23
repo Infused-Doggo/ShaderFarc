@@ -75,7 +75,7 @@ float Specular_B  : CONTROLOBJECT < string name = Controller; string item = "Spe
 float Shininess_A : CONTROLOBJECT < string name = Controller; string item = "Shininess +";>;
 float Shininess_B : CONTROLOBJECT < string name = Controller; string item = "Shininess -";>;
 
-#if SHADER_TYPE == 100 || SHADER_TYPE == 101 || SHADER_TYPE == 102 || SHADER_TYPE == 103 || SHADER_TYPE == 104
+#ifdef obj_ID
 float4x4 TX0 : CONTROLOBJECT < string name="(self)"; string item = MS(obj_ID, "_tx0_trf") ; >;
 float4x4 TX1 : CONTROLOBJECT < string name="(self)"; string item = MS(obj_ID, "_tx1_trf") ; >;
 float4x4 RP0 : CONTROLOBJECT < string name="(self)"; string item = MS(obj_ID, "_tx0_rpt") ; >;
@@ -85,7 +85,9 @@ static float3 TX0_TRF = TX0._41_42_43;
 static float3 TX1_TRF = TX1._41_42_43;
 static float4 TX0_RPT = RP0._41_42_43_44;
 static float4 TX1_RPT = RP1._41_42_43_44;
-static float  Vis = VIS._41;
+static float  Vis = VIS._42;
+#else
+static float  Vis = 0;
 #endif
 
 #if SHADER_TYPE == 5
@@ -108,8 +110,16 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 #define CHARA_COLOR 1
 #define TONE_CURVE 1
 
-#define TEXTURE_COUNT_1 1
-#define TEXTURE_COUNT_2 1
+#ifdef _Diffuse
+	#define TEXTURE_COUNT_1 1
+#else
+	#define TEXTURE_COUNT_1 0
+#endif
+#ifdef _Mask
+	#define TEXTURE_COUNT_2 1
+#else
+	#define TEXTURE_COUNT_2 0
+#endif
 #define WATER_REFLECT 1
 
 #define FOG   0
@@ -204,12 +214,8 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 	#endif
 #elif SHADER_TYPE == 5
 	#include "- Shaders/glass_eye.fxsub"
-#elif SHADER_TYPE == 6
-	#include "- Shaders/sss_skin.fxsub"
-#elif SHADER_TYPE == 10
-	#include "- Shaders/item_blinn22.fxsub"
 	
-#elif SHADER_TYPE == 100
+#elif SHADER_TYPE == 6
 	#if Lambert_Shading == 0 && Phong_Shading == 0
 		#include "- Shaders/constant.fxsub"
 	#elif Phong_Shading == 0
@@ -221,10 +227,10 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 			#include "- Shaders/blinn_per_vert.fxsub"
 		#endif
 	#endif
-#elif SHADER_TYPE == 101
-	#include "- Shaders/item_blinn.fxsub"
-#elif SHADER_TYPE == 102
+	
+#elif SHADER_TYPE == 7
 	#include "- Shaders/stage_blinn.fxsub"
+
 	//103 FLOOR	
 	//104 SKY
 #endif

@@ -1,0 +1,307 @@
+//============================================================================//
+//Shader "constant"
+//============================================================================//
+// - - - - - - - - - - -
+#include "- Shaders/#Include/common.fxh"
+#include "- Shaders/#Include/common_scene.fxh"
+#include "- Shaders/#Include/common_chara.fxh"
+// - - - - - - - - - - -
+//  Textures / Samplers  :
+//=== Diffuse ===//
+#ifdef _Diffuse
+	texture2D g_diffuse <string ResourceName = _Diffuse;>;
+#else
+	texture2D g_diffuse: MATERIALTEXTURE;
+#endif
+sampler2D g_diffuse_s = sampler_state {
+    texture = <g_diffuse>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Mask ===//
+#ifdef _Mask
+	texture2D g_mask <string ResourceName = _Mask;>;
+#else
+	texture2D g_mask;
+#endif
+sampler2D g_mask_s = sampler_state {
+    texture = <g_mask>;
+    FILTER= ANISOTROPIC;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
+	MAXANISOTROPY = 16;
+};
+//=== Effect ===//
+texture2D g_effect;
+sampler2D g_effect_s = sampler_state {
+    texture = <g_effect>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
+//============================================================================//
+//  Base Structure  :
+struct vs_in
+{
+	float3 a_position  : POSITION0;
+	float3 a_normal    : NORMAL0;
+	float4 a_color     : TEXCOORD2;  
+	float2 a_texcoord0 : TEXCOORD0;
+	float2 a_texcoord1 : TEXCOORD1;
+};
+struct vs_out
+{
+	float4 position         : SV_POSITION;
+	float3 vertcoord        : TEXCOORD0;
+	float2 fragcoord        : TEXCOORD1;
+	float4 color            : TEXCOORD2;
+	float  fog              : TEXCOORD3;
+	float4 texcoord         : TEXCOORD4; //xy=texcoord0, zw=texcoord1
+};
+//============================================================================//
+//  Vertex Shader(s)  :
+vs_out vs_model (vs_in i)
+{
+    vs_out o = (vs_out)0;
+// - - - - - - - - - - - - - - - - - - - - //
+	float3 a_position  = i.a_position;
+	float4 a_color     = i.a_color;
+	float2 a_texcoord0 = i.a_texcoord0;
+	float2 a_texcoord1 = i.a_texcoord1;
+// - - - - - - - - - - - - - - - - - - - - //
+	float4 pos_w;
+	
+        pos_w.xyz = a_position;
+        pos_w.w = 1.0;
+
+	float4 pos_c = mul(pos_w, g_transforms);
+    o.position = pos_c;
+	
+	o.vertcoord = pos_w.xyz;
+	
+	float2 fragcoord = float2((pos_c.x/pos_c.w + 1.0f) * 0.5f,
+    1.0f - (pos_c.y/pos_c.w + 1.0f) * 0.5f);
+	o.fragcoord = fragcoord.xy;
+	
+	if (FOG_HEIGHT_3) { // #if FOG_HEIGHT_3_DEF
+        float2 fog;
+        fog.x = tex2Dlod(g_effect_s, float4(pos_w.xz * float2(0.0625, -0.0625) + 0.5, 0, 0)).x * 3.0 + 1.0;
+        fog.y = clamp((pos_w.y + g_fog_height_params.y)
+            * g_fog_height_params.w + 1.0, 0.0, 1.0);
+        o.fog = (1.0 - pow(fog.y, fog.x)) * g_fog_height_params.x;
+    }
+    else if (FOG_HEIGHT_2) { // #elif FOG_HEIGHT_2_DEF
+        float2 fog;
+        fog.x = clamp((pos_c.z - g_fog_state_params.y)
+            * g_fog_state_params.w, 0.0, 1.0) * g_fog_state_params.x;
+        fog.y = clamp((-pos_w.y - g_fog_height_params.y)
+            * g_fog_height_params.w, 0.0, 1.0) * g_fog_height_params.x;
+        o.fog = max(fog.x, fog.y);
+    }
+    else if (FOG_HEIGHT_1) { // #elif FOG_HEIGHT_1_DEF
+        o.fog = clamp((pos_c.z - g_fog_state_params.y)
+            * g_fog_state_params.w, 0.0, 1.0) * g_fog_state_params.x;
+    }
+    else { // #else
+        o.fog = 0.0;
+    } // #endif
+	
+    float4 texcoord0;
+    float4 texcoord1;
+	
+        texcoord0 = float4(a_texcoord0, 0.0, 1.0);
+        texcoord1 = float4(a_texcoord1, 0.0, 1.0);
+		
+    #ifdef obj_ID
+    o.texcoord.xy = texcoord0.xy * g_texcoord_transforms[0].xy + g_texcoord_transforms[0].zw;
+    o.texcoord.zw = texcoord1.xy * g_texcoord_transforms[1].xy + g_texcoord_transforms[1].zw;
+	#else
+	o.texcoord.xy = texcoord0 * g_texcoord_transforms[0];
+    o.texcoord.zw = texcoord1 * g_texcoord_transforms[1];
+	#endif
+	
+    float4 diff = g_material_state_diffuse;
+    diff.rgb *= g_material_state_emission.rgb;
+
+        diff *= a_color;
+	
+    o.color = diff * g_blend_color;
+	return o;
+}
+//============================================================================//
+// Fragment Shader(s) :
+float4 ps_model(vs_out i) : COLOR0
+{
+	float4 frg_color = i.color;
+	float  frg_fog = i.fog;
+	float4 frg_texcoord = i.texcoord; //xy=texcoord0, zw=texcoord1
+//============================================================================//
+	gl_FragCoord.xy = i.fragcoord;
+	float4 result;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
+    float4 tex_col;
+    if (TEXTURE_COUNT_2) { // #if TEXTURE_COUNT_2_DEF
+        tex_col = tex2D(g_diffuse_s, frg_texcoord.xy);
+        float4 tmp = tex2D(g_mask_s, frg_texcoord.zw);
+
+        bool4 cc = g_texture_blend.xxxx == float4(0.0, 1.0, 2.0, 3.0);
+        tex_col.rgb = lerp(tex_col.rgb, lerp(tex_col.rgb, tmp.rgb, tmp.a), float(cc.x));
+        tex_col = lerp(tex_col, tex_col * tmp, float(cc.y));
+        tex_col.rgb = lerp(tex_col.rgb, tex_col.rgb + tmp.rgb, float(cc.z));
+        tex_col.a = lerp(tex_col.a, tex_col.a * tmp.a , float(cc.z));
+        tex_col.rgb = lerp(tex_col.rgb, tex_col.rgb * 1.0 / (tmp.a + 0.004) * tmp.rgb, float(cc.w));
+    }
+    else if (TEXTURE_COUNT_1) { // #elif TEXTURE_COUNT_1_DEF
+        tex_col = tex2D(g_diffuse_s, frg_texcoord.xy);
+    }
+    else { // #else
+        tex_col = g_material_state_diffuse;
+    } // #endif
+    tex_col *= frg_color;
+
+    if (FOG_HEIGHT_2 || FOG_HEIGHT_3) { // #if FOG_HEIGHT_2_DEF || FOG_HEIGHT_3_DEF
+        result.rgb = lerp(tex_col.rgb, g_fog_height_color.rgb, frg_fog);
+    }
+    else if (FOG_HEIGHT_1) { // #elif FOG_HEIGHT_1_DEF
+        result.rgb = lerp(tex_col.rgb, g_fog_depth_color.rgb, frg_fog);
+    }
+    else { // #else
+        result.rgb = tex_col.rgb;
+    } // #endif
+
+    result.a = tex_col.a;
+
+    #if ALPHA_TEST_DEF
+        if (result.a != 1.0 && result.a <= g_max_alpha.z)
+            discard;
+    #endif
+	return result * g_material * (Vis == 0 ? 1 : 0);
+}
+//============================================================================//
+//  Technique(s)  : 
+technique MainTecBS0 < string MMDPass = "object_ss"; > {
+    pass DrawObject {	
+		#if Src_blend == 0
+			SRCBLEND = ZERO;
+		#elif Src_blend == 1
+			SRCBLEND = ONE;
+		#elif Src_blend == 2
+			SRCBLEND = SRCCOLOR;
+		#elif Src_blend == 3
+			SRCBLEND = INVSRCCOLOR;
+		#elif Src_blend == 4
+			SRCBLEND = SRCALPHA;
+		#elif Src_blend == 5
+			SRCBLEND = INVSRCALPHA;
+		#elif Src_blend == 6
+			SRCBLEND = DESTALPHA;
+		#elif Src_blend == 7
+			SRCBLEND = INVDESTALPHA;
+		#elif Src_blend == 8
+			SRCBLEND = DESTCOLOR;
+		#elif Src_blend == 9
+			SRCBLEND = INVDESTCOLOR;
+		#elif Src_blend == 10
+			SRCBLEND = SRCALPHASAT;
+		#endif
+
+		#if Dst_blend == 0
+			DESTBLEND = ZERO;
+		#elif Dst_blend == 1
+			DESTBLEND = ONE;
+		#elif Dst_blend == 2
+			DESTBLEND = SRCCOLOR;
+		#elif Dst_blend == 3
+			DESTBLEND = INVSRCCOLOR;
+		#elif Dst_blend == 4
+			DESTBLEND = SRCALPHA;
+		#elif Dst_blend == 5
+			DESTBLEND = INVSRCALPHA;
+		#elif Dst_blend == 6
+			DESTBLEND = DESTALPHA;
+		#elif Dst_blend == 7
+			DESTBLEND = INVDESTALPHA;
+		#elif Dst_blend == 8
+			DESTBLEND = DESTCOLOR;
+		#elif Dst_blend == 9
+			DESTBLEND = INVDESTCOLOR;
+		#elif Dst_blend == 10
+			DESTBLEND = SRCALPHASAT;
+		#endif
+		
+		#if Double_sided == 0
+			CULLMODE = CCW;
+		#elif Double_sided == 1
+			CULLMODE = NONE;
+		#endif
+		
+        VertexShader = compile vs_3_0 vs_model();
+        PixelShader  = compile ps_3_0 ps_model();
+    }
+}
+
+technique MainTec0 < string MMDPass = "object"; > {
+    pass DrawObject {	
+		#if Src_blend == 0
+			SRCBLEND = ZERO;
+		#elif Src_blend == 1
+			SRCBLEND = ONE;
+		#elif Src_blend == 2
+			SRCBLEND = SRCCOLOR;
+		#elif Src_blend == 3
+			SRCBLEND = INVSRCCOLOR;
+		#elif Src_blend == 4
+			SRCBLEND = SRCALPHA;
+		#elif Src_blend == 5
+			SRCBLEND = INVSRCALPHA;
+		#elif Src_blend == 6
+			SRCBLEND = DESTALPHA;
+		#elif Src_blend == 7
+			SRCBLEND = INVDESTALPHA;
+		#elif Src_blend == 8
+			SRCBLEND = DESTCOLOR;
+		#elif Src_blend == 9
+			SRCBLEND = INVDESTCOLOR;
+		#elif Src_blend == 10
+			SRCBLEND = SRCALPHASAT;
+		#endif
+
+		#if Dst_blend == 0
+			DESTBLEND = ZERO;
+		#elif Dst_blend == 1
+			DESTBLEND = ONE;
+		#elif Dst_blend == 2
+			DESTBLEND = SRCCOLOR;
+		#elif Dst_blend == 3
+			DESTBLEND = INVSRCCOLOR;
+		#elif Dst_blend == 4
+			DESTBLEND = SRCALPHA;
+		#elif Dst_blend == 5
+			DESTBLEND = INVSRCALPHA;
+		#elif Dst_blend == 6
+			DESTBLEND = DESTALPHA;
+		#elif Dst_blend == 7
+			DESTBLEND = INVDESTALPHA;
+		#elif Dst_blend == 8
+			DESTBLEND = DESTCOLOR;
+		#elif Dst_blend == 9
+			DESTBLEND = INVDESTCOLOR;
+		#elif Dst_blend == 10
+			DESTBLEND = SRCALPHASAT;
+		#endif
+		
+		#if Double_sided == 0
+			CULLMODE = CCW;
+		#elif Double_sided == 1
+			CULLMODE = NONE;
+		#endif
+		
+        VertexShader = compile vs_3_0 vs_model();
+        PixelShader  = compile ps_3_0 ps_model();
+    }
+}

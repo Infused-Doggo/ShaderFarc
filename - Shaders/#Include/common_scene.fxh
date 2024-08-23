@@ -97,16 +97,10 @@ float4 g_foward_z_projection_row2 = float4(0.00, 0.00, -1.00002, -0.10);
 	
 //////////////////////////////////////////////////////////////////////////////////////////
 
-#if SHADER_TYPE == 100 || SHADER_TYPE == 101 || SHADER_TYPE == 102 || SHADER_TYPE == 103 || SHADER_TYPE == 104
-static float4 g_texcoord_transforms[2] = { float4(
-(TX0_RPT + 1 == Color_Offset ? Color_Offset : TX0_RPT).x, 
-(TX0_RPT + 1 == Color_Offset ? Color_Offset : TX0_RPT).y, 
--TX0_TRF.x,
--TX0_TRF.y)                               ,float4(
-(TX1_RPT + 1 == ALT_Offset ? ALT_Offset : TX1_RPT).x, 
-(TX1_RPT + 1 == ALT_Offset ? ALT_Offset : TX1_RPT).y, 
--TX1_TRF.x,
--TX1_TRF.y)};
+#ifdef obj_ID
+static float4 g_texcoord_transforms[2] = {
+float4((TX0_RPT + 1 == 1 ? 1 : TX0_RPT).x, (TX0_RPT + 1 == 1 ? 1 : TX0_RPT).y, -TX0_TRF.xy),
+float4((TX1_RPT + 1 == 1 ? 1 : TX1_RPT).x, (TX1_RPT + 1 == 1 ? 1 : TX1_RPT).y, -TX1_TRF.xy)};
 #else
 float4 g_texcoord_transforms[2] = {
 float4(1.00, 1.00, 1.00, 1.00),
@@ -221,3 +215,7 @@ static float4 g_material_state_shininess = float4(max((((PMX_Color ? SpecularPow
 static float4 g_shininess = float4(max(PMX_Color ? SpecularPower : Shininess, 1.0f), 0.00f, 0.00f, 0.00f);
 
 static float4 g_intensity = float4(Intensity, 1.00, 0.00, 1.00);
+
+static float4 g_texture_blend = ColorL3 == 1 ? 3 : ColorL2 == 1 ? 2 : ColorL1 == 1 ? 1 : 0 ;
+
+
