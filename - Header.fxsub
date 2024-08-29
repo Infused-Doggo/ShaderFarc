@@ -134,7 +134,7 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 #define FOG   0
 #define FOG_1 0
 #define FOG_2 0
-#define FOG_HEIGHT_1 1
+#define FOG_HEIGHT_1 0
 #define FOG_HEIGHT_2 0
 #define FOG_HEIGHT_3 0
 #define SPECULAR_IBL 1
