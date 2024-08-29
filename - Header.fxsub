@@ -62,12 +62,25 @@ float4x4 Chr_Specu : CONTROLOBJECT < string name = Controller; string item = "Ch
 float4x4 Chr_Ambie : CONTROLOBJECT < string name = Controller; string item = "Chara_Ambient"  ; >;
 float4x4 Stg_Diffu : CONTROLOBJECT < string name = Controller; string item = "Stage_Diffuse"  ; >;
 float4x4 Stg_Specu : CONTROLOBJECT < string name = Controller; string item = "Stage_Specular" ; >;
+float4x4 Dep_Param : CONTROLOBJECT < string name = Controller; string item = "Depth_Param"    ; >;
+float4x4 Hei_Param : CONTROLOBJECT < string name = Controller; string item = "Height_Param"   ; >;
+float4x4 Bum_Param : CONTROLOBJECT < string name = Controller; string item = "Bump_Param"     ; >;
+float4x4 Dep_Color : CONTROLOBJECT < string name = Controller; string item = "Depth_Color"    ; >;
+float4x4 Hei_Color : CONTROLOBJECT < string name = Controller; string item = "Height_Color"   ; >;
+float4x4 Bum_Color : CONTROLOBJECT < string name = Controller; string item = "Bump_Color"     ; >;
 
 static float4 chara_diffuse	 = Chr_Diffu._41_42_43_31 - float4(7, 15, -0.5, 0);
 static float4 chara_specular = Chr_Specu._41_42_43_31 - float4(7, 11, -0.5, 0);
 static float4 chara_ambient  = Chr_Ambie._41_42_43_31 - float4(7, 13, -0.5, 0);
 static float4 stage_diffuse  = Stg_Diffu._41_42_43_31 - float4(-7, 15, -0.5, 0);
 static float4 stage_specular = Stg_Specu._41_42_43_31 - float4(-7, 11, -0.5, 0);
+
+static float4 depth_param	 = (Dep_Param._41_42_43_31 - float4(-10, 15, -0.5, 0)) * float4(1, 12.5, 12.5, 1);
+static float4 height_param   = (Hei_Param._41_42_43_31 - float4(-10, 11, -0.5, 0)) * float4(1, 12.5, 12.5, 1);
+static float4 bump_param     = (Bum_Param._41_42_43_31 - float4(-10, 13, -0.5, 0)) * float4(1, 12.5, 12.5, 1);
+static float4 depth_color	 = Dep_Color._41_42_43_31 - float4(-13, 15, -0.5, 0);
+static float4 height_color   = Hei_Color._41_42_43_31 - float4(-13, 11, -0.5, 0);
+static float4 bump_color     = Bum_Color._41_42_43_31 - float4(-13, 13, -0.5, 0);
 
 float Override 	  : CONTROLOBJECT < string name = Controller; string item = "Override";>;
 float Specular_A  : CONTROLOBJECT < string name = Controller; string item = "Specular +";>;
@@ -121,7 +134,7 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 #define FOG   0
 #define FOG_1 0
 #define FOG_2 0
-#define FOG_HEIGHT_1 0
+#define FOG_HEIGHT_1 1
 #define FOG_HEIGHT_2 0
 #define FOG_HEIGHT_3 0
 #define SPECULAR_IBL 1

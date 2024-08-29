@@ -21,11 +21,7 @@ float4 g_chara_f_dir = float4(0.00, 1.00, 0.00, 0.00);
 float4 g_chara_f_ambient = float4(0.00, 0.00, 0.00, 0.00);
 float4 g_chara_f_diffuse = float4(0.00, 0.00, 0.00, 0.00);
 float4 g_chara_tc_param = float4(0.00, 0.00, 0.00, 0.00);
-float4 g_fog_depth_color = float4(1.00, 1.00, 1.00, 1.00);
-float4 g_fog_height_params = float4(0.00, 0.00, 10.00, 0.10);
-float4 g_fog_height_color = float4(1.00, 1.00, 1.00, 1.00);
-float4 g_fog_bump_params = float4(0.00, 1.00, 1000.00, 0.001);
-float4 g_fog_state_params = float4(0.00, 10.00, 1000.00, 0.00101);
+
 
 float4 g_esm_param = float4(2296.77051, 0.00, 0.00, 0.00);
 	
@@ -223,4 +219,11 @@ static float4 g_intensity = float4(Intensity, 1.00, 0.00, 1.00);
 
 static float4 g_texture_blend = ColorL3 == 1 ? 3 : ColorL2 == 1 ? 2 : ColorL1 == 1 ? 1 : 0 ;
 
+
+static float4 g_fog_height_params = float4(0.00, 0.00, 10.00, 0.10);
+static float4 g_fog_height_color = float4(1.00, 1.00, 1.00, 1.00);
+static float4 g_fog_bump_params = float4(0.00, 1.00, 1000.00, 0.001);
+
+static float4 g_fog_state_params = lerp(float4(0, 0, 0, 0), float4(depth_param.xyz, 1.0f / (depth_param.z - depth_param.y)), (int)Override);
+static float4 g_fog_depth_color = depth_color;
 
