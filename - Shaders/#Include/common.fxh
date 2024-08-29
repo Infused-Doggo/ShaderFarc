@@ -133,4 +133,4 @@ float3 Light_Position(float3 pos_dir)
         return pos_dir;
 }
 
-static float3x3 g_normal_tangent_transforms = NormalTransform( IBL_Direction[0].xyz, lerp(-LightDirection.xyz, IBL_Dir, (int)Override) );
+static float3x3 g_normal_tangent_transforms = NormalTransform( IBL_Direction[0].xyz, lerp(-LightDirection.xyz, inv(IBL_Dir), (int)Override) );

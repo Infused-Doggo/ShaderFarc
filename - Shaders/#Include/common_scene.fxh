@@ -99,8 +99,13 @@ float4 g_foward_z_projection_row2 = float4(0.00, 0.00, -1.00002, -0.10);
 
 #ifdef obj_ID
 static float4 g_texcoord_transforms[2] = {
+#ifdef Has_TX1
+float4((TX1_RPT + 1 == 1 ? 1 : TX1_RPT).x, (TX1_RPT + 1 == 1 ? 1 : TX1_RPT).y, -TX1_TRF.xy),
+float4((TX0_RPT + 1 == 1 ? 1 : TX0_RPT).x, (TX0_RPT + 1 == 1 ? 1 : TX0_RPT).y, -TX0_TRF.xy)};
+#else
 float4((TX0_RPT + 1 == 1 ? 1 : TX0_RPT).x, (TX0_RPT + 1 == 1 ? 1 : TX0_RPT).y, -TX0_TRF.xy),
 float4((TX1_RPT + 1 == 1 ? 1 : TX1_RPT).x, (TX1_RPT + 1 == 1 ? 1 : TX1_RPT).y, -TX1_TRF.xy)};
+#endif
 #else
 float4 g_texcoord_transforms[2] = {
 float4(1.00, 1.00, 1.00, 1.00),
@@ -127,7 +132,7 @@ float4 g_tex2D_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
 float4 g_texture_specular_coefficients = float4(1.00, 1.00, 1.00, 1.00);
 float4 g_texture_specular_offset = float4(0.00, 0.00, 0.00, 0.00);
                               //float4 g_shininess = float4(50.00, 0.00, 0.00, 0.00);
-#if SHADER_TYPE == 3
+#if SHADER_TYPE == 3 || Alpha_texture == 0
 float4 g_max_alpha = float4(0.00, 0.00, 0.5, 1.00);
 #else
 float4 g_max_alpha = float4(0.00, 0.00, 0.5, 0.00);
@@ -162,17 +167,17 @@ float4 g_skip_flags = uint4(8192, 0, 0, 0);
 static const float spec_coef = (float)(1.0 / (1.0 - cos(18.0 * DEG_TO_RAD)));
 static const float luce_coef = (float)(1.0 / (1.0 - cos(45.0 * DEG_TO_RAD)));
 
-static float4 g_light_env_stage_diffuse = Override ? stage_diffuse : LightAmbient * 1.6;
-static float4 g_light_env_stage_specular = (Override ? stage_specular : LightAmbient * 1.6) + (Specular_A * 5) * (1 - Specular_B);
-static float4 g_light_env_chara_diffuse = Override ? chara_diffuse : LightAmbient * 1.6;
-static float4 g_light_env_chara_ambient = Override ? chara_ambient : LightDiffuse * 1.6;
-static float4 g_light_env_chara_specular = (Override ? chara_specular : LightAmbient * 1.6) + (Specular_A * 5) * (1 - Specular_B);
+static float4 g_light_env_stage_diffuse = float4(Override ? stage_diffuse.xyz : LightAmbient.xyz * 1.6, 1.0);
+static float4 g_light_env_stage_specular = float4((Override ? stage_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), 1.0);
+static float4 g_light_env_chara_diffuse = float4(Override ? chara_diffuse.xyz : LightAmbient.xyz * 1.6, 1.0);
+static float4 g_light_env_chara_ambient = float4(Override ? chara_ambient.xyz : LightDiffuse.xyz * 1.6, 1.0);
+static float4 g_light_env_chara_specular = float4((Override ? chara_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), 1.0);
 
-static float4 g_light_stage_dir = float4(Light_Position(lerp(-LightDirection.xyz * float3(1, 1, -1), Stage_Dir, (int)Override)), 1.0);
+static float4 g_light_stage_dir = float4(Light_Position(lerp(-LightDirection.xyz, inv(Stage_Dir), (int)Override)), 1.0);
 static float4 g_light_stage_diff = g_light_env_stage_diffuse * IBL_Color[1];
 static float4 g_light_stage_spec = g_light_env_stage_specular * IBL_Color[1] * spec_coef;
 
-static float4 g_light_chara_dir = float4(Light_Position(lerp(-LightDirection.xyz, IBL_Dir, (int)Override)), 1.0);
+static float4 g_light_chara_dir = float4(Light_Position(lerp(-LightDirection.xyz, inv(IBL_Dir), (int)Override)), 1.0);
 static float4 g_light_chara_spec = g_light_env_chara_specular * IBL_Color[0] * spec_coef;
 static float4 g_light_chara_luce = IBL_Color[0] * luce_coef;
 static float4 g_light_chara_back = g_light_env_chara_specular * IBL_Color[2] * spec_coef;

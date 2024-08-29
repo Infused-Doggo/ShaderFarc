@@ -49,7 +49,7 @@ float set2(float A, float B) {
     return lerp((A * 1.5) - (B * 1.5), A, (int)Override); }
 
 static float exposure = set(ExposureA, ExposureB);
-static float exposure_rate = Override >= 0 ? 2 : 1;
+static float exposure_rate = Override > 0 ? 1 : 2;
 static float4 g_exposure    = float4(exposure * exposure_rate, 0.0625f, exposure * exposure_rate * 0.5f, auto_exposure ? 1.0f : 0.0f);
 static float4 g_fade_color  = float4(Fade_A, Fade_B, Fade_C, Fade_alpha);
 static float4 g_tone_scale  = float4(set(R_ScaleA, R_ScaleB), set(G_ScaleA, G_ScaleB), set(B_ScaleA, B_ScaleB), 0.00);
@@ -157,9 +157,12 @@ vs_out vs_model (vs_in i)
 // Fragment Shader(s) :
 float4 ps_model(vs_out i):COLOR{
 
-	bool TONE_MAP_1 = tone_type >= 0.33;
-	bool TONE_MAP_2 = tone_type >= 0.66;
+	g_tone_scale.xyz = g_tone_scale.xyz * 1.1;
+	g_tone_offset.xyz = g_tone_offset.xyz * lerp(1.1, -1.1, (int)Override);
 
+	bool TONE_MAP_1 = tone_type >= 0.66;
+	bool TONE_MAP_2 = tone_type >= 0.99;
+	
 	float4 frg_texcoord0 = i.o1;
 	float4 frg_exposure = i.exposure2;
 	float4 result;
@@ -220,7 +223,7 @@ float4 ps_ramp(vs_out i, float2 UV : TEXCOORD0) : COLOR0
 		tex_data[0].x = gamma;
 	}
 	
-	int saturate_power = (int)(Saturation_Pow * 7);
+	int saturate_power = (int)(lerp(Saturation_Pow * 7, Saturation_Pow, (int)Override));
 	saturate_power = Saturation_Pow == 0 ? 1 : saturate_power;
 	float saturation = tex_data[0].x * 2.0f - 1.0f;
 	for (int j = 0; j < saturate_power; j++) {

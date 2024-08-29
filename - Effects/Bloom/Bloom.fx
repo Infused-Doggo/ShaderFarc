@@ -646,7 +646,7 @@ float4 ps_screen(vs_out i, float2 UV : TEXCOORD3) : COLOR0
   return tex2D(ScnSamp, UV).xyzw;
 }
 //============================================================================//
-float4 ClearColor = {1,1,1,0};
+float4 ClearColor = {0,0,0,0};
 float  ClearDepth = 1.0;
 //============================================================================//
 //  Technique(s)  : 

@@ -110,11 +110,7 @@ float4x4 EyeJointController : CONTROLOBJECT <string name="(self)"; string item =
 #define CHARA_COLOR 1
 #define TONE_CURVE 1
 
-#ifdef _Diffuse
 	#define TEXTURE_COUNT_1 1
-#else
-	#define TEXTURE_COUNT_1 0
-#endif
 #ifdef _Mask
 	#define TEXTURE_COUNT_2 1
 #else

@@ -114,12 +114,29 @@ vs_out vs_model (vs_in i)
     float4 texcoord0;
     float4 texcoord1;
 	
+		#ifdef Use_TX0
         texcoord0 = float4(a_texcoord0, 0.0, 1.0);
+        texcoord1 = float4(a_texcoord0, 0.0, 1.0);
+		#else
+		texcoord0 = float4(a_texcoord0, 0.0, 1.0);
         texcoord1 = float4(a_texcoord1, 0.0, 1.0);
+		#endif
 		
     #ifdef obj_ID
     o.texcoord.xy = texcoord0.xy * g_texcoord_transforms[0].xy + g_texcoord_transforms[0].zw;
     o.texcoord.zw = texcoord1.xy * g_texcoord_transforms[1].xy + g_texcoord_transforms[1].zw;
+	#ifdef Has_TX1
+	float angle_0 = -TX1_TRF.z;
+	float angle_1 = -TX0_TRF.z;
+	#else
+	float angle_0 = -TX0_TRF.z;
+	float angle_1 = -TX1_TRF.z;
+	#endif
+	float2x2 rotationMatrix_0 = float2x2( cos(angle_0), -sin(angle_0), sin(angle_0), cos(angle_0) );
+	float2x2 rotationMatrix_1 = float2x2( cos(angle_1), -sin(angle_1), sin(angle_1), cos(angle_1) );
+	
+	o.texcoord.xy = mul( (o.texcoord.xy - 0.5), rotationMatrix_0 ) + 0.5;
+	o.texcoord.zw = mul( (o.texcoord.zw - 0.5), rotationMatrix_1 ) + 0.5;
 	#else
 	o.texcoord.xy = texcoord0 * g_texcoord_transforms[0];
     o.texcoord.zw = texcoord1 * g_texcoord_transforms[1];
