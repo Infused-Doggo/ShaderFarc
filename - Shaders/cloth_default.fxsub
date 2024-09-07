@@ -119,17 +119,6 @@ sampler2D g_sss_s = sampler_state {
     AddressU  = WRAP;
     AddressV  = WRAP;
 };
-//=== Shadow ===//
-texture2D g_shadow_depth0;
-sampler2D g_shadow_depth0_s = sampler_state {
-    texture = <g_shadow_depth0>;
-    MINFILTER = LINEAR;
-    MAGFILTER = LINEAR;
-    MIPFILTER = LINEAR;
-    ADDRESSU  = WRAP;
-    ADDRESSV  = WRAP;
-	ADDRESSW  = WRAP;
-};
 //=== Effect ===//
 texture2D g_effect;
 sampler2D g_effect_s = sampler_state {
@@ -321,7 +310,7 @@ float4 ps_model(vs_out i) : COLOR0
     float2 lc;
     //#if U16_DEF
         if (SELF_SHADOW) { // #if SELF_SHADOW_DEF
-            lc = get_chara_shadow(g_shadow_depth0_s, org_normal, frg_texcoord_shadow0);
+            lc = get_chara_shadow(g_effect_s, org_normal, frg_texcoord_shadow0);
         }
         else { // #else
             lc = (1.0);
