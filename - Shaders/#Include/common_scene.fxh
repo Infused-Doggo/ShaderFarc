@@ -164,10 +164,10 @@ static const float spec_coef = (float)(1.0 / (1.0 - cos(18.0 * DEG_TO_RAD)));
 static const float luce_coef = (float)(1.0 / (1.0 - cos(45.0 * DEG_TO_RAD)));
 
 static float4 g_light_env_stage_diffuse = float4(Override ? stage_diffuse.xyz : LightAmbient.xyz * 1.6, 1.0);
-static float4 g_light_env_stage_specular = float4((Override ? stage_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), 1.0);
+static float4 g_light_env_stage_specular = float4((Override ? stage_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), Specular.w);
 static float4 g_light_env_chara_diffuse = float4(Override ? chara_diffuse.xyz : LightAmbient.xyz * 1.6, 1.0);
 static float4 g_light_env_chara_ambient = float4(Override ? chara_ambient.xyz : LightDiffuse.xyz * 1.6, 1.0);
-static float4 g_light_env_chara_specular = float4((Override ? chara_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), 1.0);
+static float4 g_light_env_chara_specular = float4((Override ? chara_specular.xyz : LightAmbient.xyz * 1.6) + (Specular_A * 5) * (1 - Specular_B), Specular.w);
 
 static float4 g_light_stage_dir = float4(Light_Position(lerp(-LightDirection.xyz, inv(Stage_Dir), (int)Override)), 1.0);
 static float4 g_light_stage_diff = g_light_env_stage_diffuse * IBL_Color[1];
