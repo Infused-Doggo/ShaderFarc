@@ -37,8 +37,7 @@ sampler2D ScnSamp = sampler_state {
 //=== SSS ===//
 texture2D SSS_SF : OFFSCREENRENDERTARGET
 <
-	int Width  = 1080;
-    int Height = 720;
+	float2 ViewportRatio = {1.0f, 1.0f};
     string Description = "SSS Material Array";
     float4 ClearColor = {1.0f, 1.0f, 1.0f, 0.0f};
     float ClearDepth = 1.0f;
@@ -60,8 +59,7 @@ sampler2D SSSS = sampler_state {
 texture2D ANISO_SF : OFFSCREENRENDERTARGET
 <
     string Description = "(ANISO) U/V/Radial Array";
-	int Width  = 1080;
-    int Height = 720;
+	float2 ViewportRatio = {1.0f, 1.0f};
     float4 ClearColor = {1.0f, 1.0f, 1.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
@@ -92,8 +90,7 @@ sampler2D Aniso = sampler_state {
 //=== DEPTH ===//
 texture DEPTH_SF : OFFSCREENRENDERTARGET
 <   string Description = "ShaderFarc Depth";
-    int Width  = 1080;
-    int Height = 720;
+    float2 ViewportRatio = {1.0f, 1.0f};
     float4 ClearColor = {0.0f, 0.0f, 0.0f, 0.0f};
     float ClearDepth = 1.0f;
 	bool AntiAlias = true;
