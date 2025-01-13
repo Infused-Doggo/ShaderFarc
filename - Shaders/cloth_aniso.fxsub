@@ -421,8 +421,8 @@ float4 ps_model(vs_out i) : COLOR0
 	
 	float3 ibl_spec = texCUBE(g_ibl_specular_s, reflect_vec).rgb;
 	float3 ibl_spec_rough = texCUBE(g_ibl_specular_rough_s, reflect_vec).rgb;
-	float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, reflect_vec).rgb;
-	float3 ibl_spec_shad_rough = texCUBE(g_ibl_specular_shadowed_rough_s, reflect_vec).rgb;
+	float3 ibl_spec_shad = texCUBE(g_ibl_specular_s, reflect_vec).rgb;
+	float3 ibl_spec_shad_rough = texCUBE(g_ibl_specular_rough_s, reflect_vec).rgb;
 	ibl_spec = lerp(ibl_spec_rough, ibl_spec, g_material_state_shininess.x);
 	ibl_spec_shad = lerp(ibl_spec_shad_rough, ibl_spec_shad, g_material_state_shininess.x);
 

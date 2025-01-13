@@ -53,13 +53,14 @@ sampler2D g_ramp_s = sampler_state {
     ADDRESSV = CLAMP;
 };
 
-shared texture2D g_tonemap : RENDERCOLORTARGET <
-	string Format = "A16B16G16R16F";>;
+shared texture2D g_tonemap : RENDERCOLORTARGET;
 sampler2D g_tone_map_s = sampler_state {
-	texture = <g_tonemap>;
-    FILTER = ANISOTROPIC;
-    ADDRESSU = CLAMP;
-    ADDRESSV = CLAMP;
+    texture = <g_tonemap>;
+    MinFilter = LINEAR;
+    MagFilter = LINEAR;
+    MipFilter = LINEAR;
+    AddressU  = WRAP;
+    AddressV  = WRAP;
 };
 
 bool TM_x : CONTROLOBJECT < string name = "ToneMap.x"; >;

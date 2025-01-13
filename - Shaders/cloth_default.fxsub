@@ -119,6 +119,17 @@ sampler2D g_sss_s = sampler_state {
     AddressU  = WRAP;
     AddressV  = WRAP;
 };
+//=== Shadow ===//
+texture2D g_shadow_depth0;
+sampler2D g_shadow_depth0_s = sampler_state {
+    texture = <g_shadow_depth0>;
+    MINFILTER = LINEAR;
+    MAGFILTER = LINEAR;
+    MIPFILTER = LINEAR;
+    ADDRESSU  = WRAP;
+    ADDRESSV  = WRAP;
+	ADDRESSW  = WRAP;
+};
 //=== Effect ===//
 texture2D g_effect;
 sampler2D g_effect_s = sampler_state {
@@ -310,7 +321,7 @@ float4 ps_model(vs_out i) : COLOR0
     float2 lc;
     //#if U16_DEF
         if (SELF_SHADOW) { // #if SELF_SHADOW_DEF
-            lc = get_chara_shadow(g_effect_s, org_normal, frg_texcoord_shadow0);
+            lc = get_chara_shadow(g_shadow_depth0_s, org_normal, frg_texcoord_shadow0);
         }
         else { // #else
             lc = (1.0);
@@ -381,7 +392,7 @@ float4 ps_model(vs_out i) : COLOR0
         float3 ibl_spec = texCUBE(g_ibl_specular_s, reflect_vec).rgb;
         float3 ibl_spec_rough = texCUBE(g_ibl_specular_rough_s, reflect_vec).rgb;
         float3 ibl_spec_shad = texCUBE(g_ibl_specular_shadowed_s, reflect_vec).rgb;
-        float3 ibl_spec_shad_rough = texCUBE(g_ibl_specular_shadowed_rough_s, reflect_vec).rgb;
+        float3 ibl_spec_shad_rough = texCUBE(g_ibl_specular_rough_s, reflect_vec).rgb;
         ibl_spec = lerp(ibl_spec_rough, ibl_spec, g_material_state_shininess.x);
         ibl_spec_shad = lerp(ibl_spec_shad_rough, ibl_spec_shad, g_material_state_shininess.x);
 
