@@ -1,12 +1,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 //
-//  HgShadow.fx ‚•iˆÊ(‚©‚à‚µ‚ê‚È‚¢)‰e¶¬ƒGƒtƒFƒNƒg
-//  ì¬: j‹àP
+//  HgShadow.fx é«˜å“ä½(ã‹ã‚‚ã—ã‚Œãªã„)å½±ç”Ÿæˆã‚¨ãƒ•ã‚§ã‚¯ãƒˆ
+//  ä½œæˆ: é‡é‡‘P
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ƒpƒ‰ƒ[ƒ^éŒ¾
+// ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿å®£è¨€
 
-// HgShadow‚Ìƒpƒ‰ƒ[ƒ^‚ğæ‚è‚Ş
+// HgShadowã®ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’å–ã‚Šè¾¼ã‚€
 #include "HgShadow_Header.fxh"
 
 #ifndef MIKUMIKUMOVING
@@ -18,12 +18,12 @@ static float Scale = AcsSi * 0.1f;
 static float OcclLenParam = AcsTr;
 
 #else
-// MMM“ü—Íƒpƒ‰ƒ[ƒ^‚Ìó‚¯“n‚µ—p
+// MMMå…¥åŠ›ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã®å—ã‘æ¸¡ã—ç”¨
 
 #if (ShadowMapType == CLSPSM)
 shared float HgShadow_MMM_ShadowViewNear <
-    string UIName = "Near’l";
-    string UIHelp = "ƒVƒƒƒhƒEƒ}ƒbƒv‚ğQÆ‚Å‚«‚éƒJƒƒ‰‹‘ä‚ÌÅ‹ß’l";
+    string UIName = "Nearå€¤";
+    string UIHelp = "ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ã‚’å‚ç…§ã§ãã‚‹ã‚«ãƒ¡ãƒ©è¦–éŒå°ã®æœ€è¿‘å€¤";
     string UIWidget = "Numeric";
     bool UIVisible =  true;
     float UIMin = 1.0;
@@ -33,11 +33,11 @@ shared float HgShadow_MMM_ShadowViewNear <
 
 shared float HgShadow_MMM_ShadowViewFar <
     #if (ShadowMapType == CLSPSM)
-    string UIName = "Far’l";
-    string UIHelp = "ƒVƒƒƒhƒEƒ}ƒbƒv‚ğQÆ‚Å‚«‚éƒJƒƒ‰‹‘ä‚ÌÅ‰“’l";
+    string UIName = "Farå€¤";
+    string UIHelp = "ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ã‚’å‚ç…§ã§ãã‚‹ã‚«ãƒ¡ãƒ©è¦–éŒå°ã®æœ€é å€¤";
     #else
-    string UIName = "ƒ}ƒbƒv”ÍˆÍ";
-    string UIHelp = "ƒVƒƒƒhƒEƒ}ƒbƒv‚ğQÆ‚Å‚«‚é”ÍˆÍ";
+    string UIName = "ãƒãƒƒãƒ—ç¯„å›²";
+    string UIHelp = "ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ã‚’å‚ç…§ã§ãã‚‹ç¯„å›²";
     #endif
     string UIWidget = "Numeric";
     bool UIVisible =  true;
@@ -47,7 +47,7 @@ shared float HgShadow_MMM_ShadowViewFar <
 
 shared float HgShadow_MMM_CascadedParam <
     string UIName = "CascadParam";
-    string UIHelp = "CLSPSM‚ÌƒVƒƒƒhƒEƒ}ƒbƒv•ªŠ„’²®ƒpƒ‰ƒ[ƒ^";
+    string UIHelp = "CLSPSMã®ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—åˆ†å‰²èª¿æ•´ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     float UIMin = -1.0;
@@ -57,7 +57,7 @@ shared float HgShadow_MMM_CascadedParam <
 #if (ShadowMapType == CLSPSM)
 shared float HgShadow_MMM_PerspectiveParam <
     string UIName = "PersParam";
-    string UIHelp = "CLSPSM‚ÌƒVƒƒƒhƒEƒ}ƒbƒvƒp[ƒX’²®ƒpƒ‰ƒ[ƒ^";
+    string UIHelp = "CLSPSMã®ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ãƒ‘ãƒ¼ã‚¹èª¿æ•´ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     float UIMin = -20.0;
@@ -66,8 +66,8 @@ shared float HgShadow_MMM_PerspectiveParam <
 #endif
 
 shared float HgShadow_MMM_BlurPower <
-    string UIName = "‰e‚Ú‚©‚µ";
-    string UIHelp = "ƒ\\ƒtƒgƒVƒƒƒhƒE‚Ì‚Ú‚©‚µ“x";
+    string UIName = "å½±ã¼ã‹ã—";
+    string UIHelp = "ã‚½\ãƒ•ãƒˆã‚·ãƒ£ãƒ‰ã‚¦ã®ã¼ã‹ã—åº¦";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     float UIMin = 0.0;
@@ -75,7 +75,7 @@ shared float HgShadow_MMM_BlurPower <
 > = float( 1.0 );
 
 shared float HgShadow_MMM_Density <
-    string UIName = "‰e”Z“x";
+    string UIName = "å½±æ¿ƒåº¦";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     float UIMin = 0.0;
@@ -83,8 +83,8 @@ shared float HgShadow_MMM_Density <
 > = float( 1.0 );
 
 float MMM_OcclLengthParam <
-    string UIName = "Õ•Á‹——£’²®";
-    string UIHelp = "Õ•Á‹——£‚É‚æ‚Á‚Ä‚Ú‚©‚µ‚Ì‹­‚³‚ğ•Ï‚¦‚é“x‡‚¢‚ğ‚±‚±‚Å’²®‚µ‚Ü‚·";
+    string UIName = "é®è”½è·é›¢èª¿æ•´";
+    string UIHelp = "é®è”½è·é›¢ã«ã‚ˆã£ã¦ã¼ã‹ã—ã®å¼·ã•ã‚’å¤‰ãˆã‚‹åº¦åˆã„ã‚’ã“ã“ã§èª¿æ•´ã—ã¾ã™";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     float UIMin = 0.0;
@@ -92,8 +92,8 @@ float MMM_OcclLengthParam <
 > = float( 1.0 );
 
 shared float HgShadow_MMM_NearDistParam <
-    string UIName = "‹ß–T‰e’²®";
-    string UIHelp = "Õ•Á‹——£‚ª‹É’[‚É’Z‚¢‰e‚Ì‚¿‚ç‚Â‚«‚ğ—}‚¦‚é‚½‚ß‚Ì’²®’l\n‘å‚«‚­‚µ‚·‚¬‚é‚Æ‹ß–T‰e‚ªÁ‚¦‚Ä‚µ‚Ü‚¢‚Ü‚·";
+    string UIName = "è¿‘å‚å½±èª¿æ•´";
+    string UIHelp = "é®è”½è·é›¢ãŒæ¥µç«¯ã«çŸ­ã„å½±ã®ã¡ã‚‰ã¤ãã‚’æŠ‘ãˆã‚‹ãŸã‚ã®èª¿æ•´å€¤\nå¤§ããã—ã™ãã‚‹ã¨è¿‘å‚å½±ãŒæ¶ˆãˆã¦ã—ã¾ã„ã¾ã™";
     string UIWidget = "Slider";
     bool UIVisible =  true;
     #if (ShadowMapType == CLSPSM)
@@ -118,9 +118,9 @@ float Script : STANDARDSGLOBAL <
     string ScriptOrder = "postprocess";
 > = 0.8;
 
-// ƒVƒƒƒhƒEƒ}ƒbƒvƒoƒbƒtƒ@ƒTƒCƒY
-#define SMAPSIZE_WIDTH   ShadowMapSize * 5.0
-#define SMAPSIZE_HEIGHT  ShadowMapSize * 5.0
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ãƒãƒƒãƒ•ã‚¡ã‚µã‚¤ã‚º
+#define SMAPSIZE_WIDTH   ShadowMapSize
+#define SMAPSIZE_HEIGHT  ShadowMapSize
 
 #define TEX_FORMAT_SMAP  "D3DFMT_R32F"
 #define TEX_MIPLEVELS  1
@@ -142,9 +142,9 @@ float Script : STANDARDSGLOBAL <
 
 
 #ifndef MIKUMIKUMOVING
-// ƒIƒtƒXƒNƒŠ[ƒ“‰e¶¬—p‰æ–Êƒf[ƒ^ƒ}ƒbƒvì¬ƒoƒbƒtƒ@(MME—p)
+// ã‚ªãƒ•ã‚¹ã‚¯ãƒªãƒ¼ãƒ³å½±ç”Ÿæˆç”¨ç”»é¢ãƒ‡ãƒ¼ã‚¿ãƒãƒƒãƒ—ä½œæˆãƒãƒƒãƒ•ã‚¡(MMEç”¨)
 texture HgS_VMap : OFFSCREENRENDERTARGET <
-    string Description = "HgShadow.fx‚Ì‰e¶¬ƒ}ƒbƒvƒoƒbƒtƒ@";
+    string Description = "HgShadow.fxã®å½±ç”Ÿæˆãƒãƒƒãƒ—ãƒãƒƒãƒ•ã‚¡";
     float2 ViewPortRatio = {1.0, 1.0};
     float4 ClearColor = { 0, 0, 0, 1 };
     float ClearDepth = 1.0;
@@ -158,9 +158,9 @@ texture HgS_VMap : OFFSCREENRENDERTARGET <
 >;
 #endif
 
-// ƒIƒtƒXƒNƒŠ[ƒ“ƒVƒƒƒhƒEƒ}ƒbƒvƒoƒbƒtƒ@
+// ã‚ªãƒ•ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ãƒãƒƒãƒ•ã‚¡
 shared texture HgS_SMap : OFFSCREENRENDERTARGET <
-    string Description = "HgShadow.fx‚ÌƒVƒƒƒhƒEƒ}ƒbƒvƒoƒbƒtƒ@";
+    string Description = "HgShadow.fxã®ã‚·ãƒ£ãƒ‰ã‚¦ãƒãƒƒãƒ—ãƒãƒƒãƒ•ã‚¡";
     int Width  = SMAPSIZE_WIDTH;
     int Height = SMAPSIZE_HEIGHT;
     float4 ClearColor = { 1, 1, 1, 1 };
@@ -175,9 +175,9 @@ shared texture HgS_SMap : OFFSCREENRENDERTARGET <
 >;
 
 #ifdef MIKUMIKUMOVING
-// ƒIƒtƒXƒNƒŠ[ƒ“‰e¶¬—p‰æ–Êƒf[ƒ^ƒ}ƒbƒvì¬ƒoƒbƒtƒ@(MMM—p)
+// ã‚ªãƒ•ã‚¹ã‚¯ãƒªãƒ¼ãƒ³å½±ç”Ÿæˆç”¨ç”»é¢ãƒ‡ãƒ¼ã‚¿ãƒãƒƒãƒ—ä½œæˆãƒãƒƒãƒ•ã‚¡(MMMç”¨)
 texture HgS_VMap : OFFSCREENRENDERTARGET <
-    string Description = "HgShadow.fx‚Ì‰æ–Êƒ}ƒbƒvƒoƒbƒtƒ@";
+    string Description = "HgShadow.fxã®ç”»é¢ãƒãƒƒãƒ—ãƒãƒƒãƒ•ã‚¡";
     float2 ViewPortRatio = {1.0, 1.0};
     float4 ClearColor = { 0, 0, 0, 1 };
     float ClearDepth = 1.0;
@@ -201,11 +201,11 @@ sampler ViewportMapSamp = sampler_state {
 };
 
 
-// ƒŒƒ“ƒ_ƒŠƒ“ƒOƒ^[ƒQƒbƒg‚ÌƒNƒŠƒA’l
+// ãƒ¬ãƒ³ãƒ€ãƒªãƒ³ã‚°ã‚¿ãƒ¼ã‚²ãƒƒãƒˆã®ã‚¯ãƒªã‚¢å€¤
 float4 ClearColor = {0,0,0,1};
 float ClearDepth  = 1.0f;
 
-// ƒVƒƒƒhƒE•`‰æ•ÒW—p‚ÌƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg
+// ã‚·ãƒ£ãƒ‰ã‚¦æç”»ç·¨é›†ç”¨ã®ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
 texture2D HgShadow_ViewportMap1 : RENDERCOLORTARGET <
     float2 ViewPortRatio = {1.0, 1.0};
     int MipLevels = 1;
@@ -220,7 +220,7 @@ sampler2D WorkMapSamp1 = sampler_state {
     AddressV  = CLAMP;
 };
 
-// ƒVƒƒƒhƒE•`‰æ•ÒW—p‚ÌƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg2
+// ã‚·ãƒ£ãƒ‰ã‚¦æç”»ç·¨é›†ç”¨ã®ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ2
 shared texture2D HgShadow_ViewportMap2 : RENDERCOLORTARGET <
     float2 ViewPortRatio = {1.0, 1.0};
     int MipLevels = 1;
@@ -235,14 +235,14 @@ sampler2D WorkMapSamp2 = sampler_state {
     AddressV  = CLAMP;
 };
 
-// ƒVƒƒƒhƒE•`‰æ‚É—p‚¢‚é[“xƒXƒeƒ“ƒVƒ‹ƒoƒbƒtƒ@
+// ã‚·ãƒ£ãƒ‰ã‚¦æç”»ã«ç”¨ã„ã‚‹æ·±åº¦ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ãƒãƒƒãƒ•ã‚¡
 texture2D HgShadow_DepthStencilBuffer : RENDERDEPTHSTENCILTARGET <
     float2 ViewPortRatio = {1.0, 1.0};
     string Format = "D3DFMT_D24S8";
 >;
 
 
-// JitteredSampling—p—”ƒeƒNƒXƒ`ƒƒ
+// JitteredSamplingç”¨ä¹±æ•°ãƒ†ã‚¯ã‚¹ãƒãƒ£
 texture RandomTex <
     string ResourceName = "JitteredSamp.png";
     int MipLevels = 1;
@@ -260,11 +260,11 @@ sampler RandomSmp = sampler_state {
 #ifndef MIKUMIKUMOVING
 #if WithVolumeShadow==1
 
-// ƒVƒƒƒhƒEƒ{ƒŠƒ…[ƒ€§Œäƒpƒ‰ƒ[ƒ^
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒœãƒªãƒ¥ãƒ¼ãƒ åˆ¶å¾¡ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 bool VolumeShadow_Valid  : CONTROLOBJECT < string name = "VolumeShadow.x"; >;
 float VolumeShadow_Levels  : CONTROLOBJECT < string name = "VolumeShadow.x"; string item = "Tr"; >;
 
-// ƒVƒƒƒhƒEƒ{ƒŠƒ…[ƒ€‚Ì•`‰æŒ‹‰Ê‚ğ‹L˜^‚·‚é‚½‚ß‚ÌƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg
+// ã‚·ãƒ£ãƒ‰ã‚¦ãƒœãƒªãƒ¥ãƒ¼ãƒ ã®æç”»çµæœã‚’è¨˜éŒ²ã™ã‚‹ãŸã‚ã®ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
 shared texture2D VolumeShadow_VolumeMap : RENDERCOLORTARGET;
 sampler2D VolumeShadow_VolumeMapSamp = sampler_state {
     texture = <VolumeShadow_VolumeMap>;
@@ -279,7 +279,7 @@ sampler2D VolumeShadow_VolumeMapSamp = sampler_state {
 #endif
 
 #ifdef MIKUMIKUMOVING
-// ƒIƒŠƒWƒiƒ‹‚Ì•`‰æŒ‹‰Ê‚ğ‹L˜^‚·‚é‚½‚ß‚ÌƒŒƒ“ƒ_[ƒ^[ƒQƒbƒg
+// ã‚ªãƒªã‚¸ãƒŠãƒ«ã®æç”»çµæœã‚’è¨˜éŒ²ã™ã‚‹ãŸã‚ã®ãƒ¬ãƒ³ãƒ€ãƒ¼ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
 texture2D ScnMap : RENDERCOLORTARGET <
     float2 ViewPortRatio = {1.0,1.0};
     int MipLevels = 1;
@@ -294,7 +294,7 @@ sampler2D ScnSamp = sampler_state {
     AddressV = CLAMP;
 };
 
-// ƒsƒNƒZƒ‹ƒVƒF[ƒ_
+// ãƒ”ã‚¯ã‚»ãƒ«ã‚·ã‚§ãƒ¼ãƒ€
 float4 PS_ScrDraw( float2 Tex: TEXCOORD0 ) : COLOR
 {
     return tex2D( ScnSamp, Tex );
@@ -302,7 +302,7 @@ float4 PS_ScrDraw( float2 Tex: TEXCOORD0 ) : COLOR
 #endif
 
 
-// ƒXƒNƒŠ[ƒ“ƒTƒCƒYEƒTƒ“ƒvƒŠƒ“ƒO•
+// ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‚µã‚¤ã‚ºãƒ»ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°å¹…
 float2 ViewportSize : VIEWPORTPIXELSIZE;
 static float2 ViewportOffset = float2(0.5,0.5) / ViewportSize;
 static float2 SampStep = float2(1,1) / ViewportSize;
@@ -320,7 +320,7 @@ static float2 SampStep2[9] = { float2(0.0f, 0.0f),
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ‹¤’Ê‚Ì’¸“_ƒVƒF[ƒ_
+// å…±é€šã®é ‚ç‚¹ã‚·ã‚§ãƒ¼ãƒ€
 
 struct VS_OUTPUT {
     float4 Pos : POSITION;
@@ -339,14 +339,14 @@ VS_OUTPUT VS_Common(float4 Pos : POSITION, float2 Tex: TEXCOORD)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ì‹Æ—p‚Ìƒrƒ…[ƒ|[ƒgƒ}ƒbƒv‚ğì¬
+// ä½œæ¥­ç”¨ã®ãƒ“ãƒ¥ãƒ¼ãƒãƒ¼ãƒˆãƒãƒƒãƒ—ã‚’ä½œæˆ
 
 float4 PS_ShadowDraw( float2 Tex: TEXCOORD0 ) : COLOR
 {
-    // Õ•Á—¦EÕ•Á‹——£
+    // é®è”½ç‡ãƒ»é®è”½è·é›¢
     float2 data = tex2D( ViewportMapSamp, Tex ).xy;
 
-    // ƒ{ƒŠƒ…[ƒ€ƒVƒƒƒhƒE‚ğ‹Ÿ—p‚·‚éê‡‚Í’Ç‰Á
+    // ãƒœãƒªãƒ¥ãƒ¼ãƒ ã‚·ãƒ£ãƒ‰ã‚¦ã‚’ä¾›ç”¨ã™ã‚‹å ´åˆã¯è¿½åŠ 
     #ifndef MIKUMIKUMOVING
     #if WithVolumeShadow==1
     if(VolumeShadow_Valid){
@@ -363,13 +363,13 @@ float4 PS_ShadowDraw( float2 Tex: TEXCOORD0 ) : COLOR
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ‚Ú‚©‚µ‚Ég‚¤ƒpƒ‰ƒ[ƒ^
+// ã¼ã‹ã—ã«ä½¿ã†ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
 
 float4x4 ProjMatrix : PROJECTION;
-float DepthThreshold  = 0.5;    // [“x‚Ìè‡’l
-float NormalThreshold = 0.1;    // –@ü‚Ìè‡’l
+float DepthThreshold  = 0.5;    // æ·±åº¦ã®é–¾å€¤
+float NormalThreshold = 0.1;    // æ³•ç·šã®é–¾å€¤
 
-// ‚Ú‚©‚µƒTƒ“ƒvƒŠƒ“ƒO”ÍˆÍ‚Ì‹«ŠE”»’è
+// ã¼ã‹ã—ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ç¯„å›²ã®å¢ƒç•Œåˆ¤å®š
 bool IsSameArea(float2 edge0, float2 edge1)
 {
     float edgeDepthThreshold = min(DepthThreshold + 0.05f * max(edge0.x-40.0f, 0.0f), 50.0f);
@@ -379,11 +379,11 @@ bool IsSameArea(float2 edge0, float2 edge1)
 
 #if SoftShadowQuality > 1
 
-// ‚Ú‚©‚µ‹­“x‚ÌŠî€’l
+// ã¼ã‹ã—å¼·åº¦ã®åŸºæº–å€¤
 static float OcclBlurPower = InitBlurPower * Scale;
 static float DistBlurPower = OcclBlurPower * ViewportMapSampCount * 0.3f;
 
-// ”¼Œa1‰~“à‚Ìƒ‰ƒ“ƒ_ƒ€À•W‚ğ“¾‚é(Jittered Sampling)
+// åŠå¾„1å††å†…ã®ãƒ©ãƒ³ãƒ€ãƒ åº§æ¨™ã‚’å¾—ã‚‹(Jittered Sampling)
 float2 CalcRandomCoord(int index, int rCount, float seed)
 {
     float4 rand = tex2D( RandomSmp, float2((index-0.5f)/64.0f, seed) );
@@ -393,17 +393,17 @@ float2 CalcRandomCoord(int index, int rCount, float seed)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// Õ•Á‹——£‚Ì‚Ú‚©‚µ
+// é®è”½è·é›¢ã®ã¼ã‹ã—
 
 #if SoftShadowQuality == 3
 float4 PS_BlurDistance( float2 Tex: TEXCOORD0, uniform sampler2D Samp, uniform float stepLength ) : COLOR
 {
     float4 Color0 = tex2D( Samp, Tex );
 
-    // data.x:[“x, data.y:ƒ‰ƒCƒg‚Æ–@ü‚Ì‚È‚·Šp
+    // data.x:æ·±åº¦, data.y:ãƒ©ã‚¤ãƒˆã¨æ³•ç·šã®ãªã™è§’
     float2 data = tex2D( ViewportMapSamp, Tex ).zw;
 
-    // ‹ß–TƒtƒBƒ‹ƒ^ƒŠƒ“ƒO‚Åü•Ó‚ğ•½‹Ï‰»‚·‚é
+    // è¿‘å‚ãƒ•ã‚£ãƒ«ã‚¿ãƒªãƒ³ã‚°ã§å‘¨è¾ºã‚’å¹³å‡åŒ–ã™ã‚‹
     float dist = Color0.y + Color0.y;
     float weight = 2.0f;
     int rCount = ceil(float(ViewportMapSampCount-1)/4.0f);
@@ -412,12 +412,12 @@ float4 PS_BlurDistance( float2 Tex: TEXCOORD0, uniform sampler2D Samp, uniform f
     [unroll]
     #endif
     for(int i=1; i<ViewportMapSampCount; i++){
-        // ƒTƒ“ƒvƒŠƒ“ƒOˆÊ’u
+        // ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ä½ç½®
         float2 texCoord = Tex + BlurSampStep * CalcRandomCoord(i, rCount, seed) * stepLength * DistBlurPower;
-        // [“x‚ÆŠp“x·‚©‚ç‹«ŠE‚ğ”»’è
+        // æ·±åº¦ã¨è§’åº¦å·®ã‹ã‚‰å¢ƒç•Œã‚’åˆ¤å®š
         float2 edge0 = data;
         float2 edge1 = tex2D( ViewportMapSamp, texCoord ).zw;
-        // ‹«ŠE‚ÌŠO‘¤‚ÍƒTƒ“ƒvƒŠƒ“ƒO‚µ‚È‚¢
+        // å¢ƒç•Œã®å¤–å´ã¯ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã—ãªã„
         if( IsSameArea(edge0, edge1)){
             float dist1 = tex2D( Samp, texCoord ).y;
             //if(Color0.y <= dist1){
@@ -426,26 +426,26 @@ float4 PS_BlurDistance( float2 Tex: TEXCOORD0, uniform sampler2D Samp, uniform f
             //}
         }
     }
-    dist /= weight;  // •½‹Ï‰»
+    dist /= weight;  // å¹³å‡åŒ–
 
     return float4(Color0.x, dist, 0, 1);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ‰e‚Ì‚Ú‚©‚µ
+// å½±ã®ã¼ã‹ã—
 
 float4 PS_BlurShadow( float2 Tex: TEXCOORD0, uniform sampler2D Samp, uniform float stepLength ) : COLOR
 {
     float4 Color0 = tex2D( Samp, Tex );
 
-    // data.x:[“x, data.y:ƒ‰ƒCƒg‚Æ–@ü‚Ì‚È‚·Šp
+    // data.x:æ·±åº¦, data.y:ãƒ©ã‚¤ãƒˆã¨æ³•ç·šã®ãªã™è§’
     float2 data = tex2D( ViewportMapSamp, Tex ).zw;
-    // ‚Ú‚©‚µ‚Ì‹­‚³(Õ•Á‹——£,[“x,ƒ‰ƒCƒg–@üŠp“x,‹–ìŠp‚ğl—¶‚É“ü‚ê‚Ä‚Ú‚©‚·‹­‚³‚ğŒˆ’è‚·‚é)
+    // ã¼ã‹ã—ã®å¼·ã•(é®è”½è·é›¢,æ·±åº¦,ãƒ©ã‚¤ãƒˆæ³•ç·šè§’åº¦,è¦–é‡è§’ã‚’è€ƒæ…®ã«å…¥ã‚Œã¦ã¼ã‹ã™å¼·ã•ã‚’æ±ºå®šã™ã‚‹)
     float OcclLen = min(lerp(3.0f, Color0.y+1.0f, OcclLenParam), Color0.y+1.0f);
     float BlurPower = OcclBlurPower * max(ProjMatrix._22 * OcclLen / (pow(data.x+1.0f, 0.75f) * (abs(data.y)+0.2f)), 1.0f);
 
-    // ‹ß–TƒtƒBƒ‹ƒ^ƒŠƒ“ƒO‚Åü•Ó‚ğ•½‹Ï‰»‚·‚é
+    // è¿‘å‚ãƒ•ã‚£ãƒ«ã‚¿ãƒªãƒ³ã‚°ã§å‘¨è¾ºã‚’å¹³å‡åŒ–ã™ã‚‹
     float comp = Color0.x + Color0.x;
     float weight = 2.0f;
     int rCount = ceil(float(ViewportMapSampCount-1)/4.0f);
@@ -454,27 +454,27 @@ float4 PS_BlurShadow( float2 Tex: TEXCOORD0, uniform sampler2D Samp, uniform flo
     [unroll]
     #endif
     for(int i=1; i<ViewportMapSampCount; i++){
-        // ƒTƒ“ƒvƒŠƒ“ƒOˆÊ’u
+        // ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ä½ç½®
         float2 texCoord = Tex + BlurSampStep * CalcRandomCoord(i, rCount, seed) * stepLength * BlurPower;
         if( !any( saturate(texCoord) - texCoord ) ) {
-            // [“x‚ÆŠp“x·‚©‚ç‹«ŠE‚ğ”»’è
+            // æ·±åº¦ã¨è§’åº¦å·®ã‹ã‚‰å¢ƒç•Œã‚’åˆ¤å®š
             float2 edge0 = data;
             float2 edge1 = tex2D( ViewportMapSamp, texCoord ).zw;
-            // ‹«ŠE‚ÌŠO‘¤‚ÍƒTƒ“ƒvƒŠƒ“ƒO‚µ‚È‚¢
+            // å¢ƒç•Œã®å¤–å´ã¯ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã—ãªã„
             if( IsSameArea(edge0, edge1)){
                 comp += tex2D( Samp, texCoord ).x;
                 weight += 1.0f;
             }
         }
     }
-    comp /= weight;  // •½‹Ï‰»
+    comp /= weight;  // å¹³å‡åŒ–
 
     return float4(comp, Color0.y, 0, 1);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ÅŒã‚É9“_ƒTƒ“ƒvƒŠƒ“ƒO‚Å‚Ú‚©‚µ‚Ì‚´‚ç‚Â‚«‚ğ®‚¦‚é
+// æœ€å¾Œã«9ç‚¹ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã§ã¼ã‹ã—ã®ã–ã‚‰ã¤ãã‚’æ•´ãˆã‚‹
 
 #if SoftShadowQuality > 0
 
@@ -492,26 +492,26 @@ float4 PS_BlurShadow2( float2 Tex: TEXCOORD0, uniform sampler2D Samp ) : COLOR
 {
     float4 Color0 = tex2D( Samp, Tex );
 
-    // data.x:[“x, data.y:ƒ‰ƒCƒg‚Æ–@ü‚Ì‚È‚·Šp
+    // data.x:æ·±åº¦, data.y:ãƒ©ã‚¤ãƒˆã¨æ³•ç·šã®ãªã™è§’
     float2 data = tex2D( ViewportMapSamp, Tex ).zw;
-    // ‚Ú‚©‚µ‚Ì‹­‚³(Õ•Á‹——£,[“x,ƒ‰ƒCƒg–@üŠp“x,‹–ìŠp‚ğl—¶‚É“ü‚ê‚Ä‚Ú‚©‚·‹­‚³‚ğŒˆ’è‚·‚é)
+    // ã¼ã‹ã—ã®å¼·ã•(é®è”½è·é›¢,æ·±åº¦,ãƒ©ã‚¤ãƒˆæ³•ç·šè§’åº¦,è¦–é‡è§’ã‚’è€ƒæ…®ã«å…¥ã‚Œã¦ã¼ã‹ã™å¼·ã•ã‚’æ±ºå®šã™ã‚‹)
     float BlurPower = clamp(ProjMatrix._22 * BLUR_OCCRATE / (BLUR_DEPRATE * (abs(data.y)+0.2f)), 0.5f, 1.5f) * min(Scale, 1.0f);
 
-    // 9“_ƒTƒ“ƒvƒŠƒ“ƒO
+    // 9ç‚¹ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°
     float comp = Color0.x;
     float weight = 1.0f;
     [unroll]
     for(int i=1; i<9; i++){
-        // [“x‚ÆŠp“x·‚©‚ç‹«ŠE‚ğ”»’è
+        // æ·±åº¦ã¨è§’åº¦å·®ã‹ã‚‰å¢ƒç•Œã‚’åˆ¤å®š
         float2 edge0 = data;
         float2 edge1 = tex2D( ViewportMapSamp, Tex+SampStep2[i]*BlurPower*BLUR_RATE ).zw;
-        // ‹«ŠE‚ÌŠO‘¤‚ÍƒTƒ“ƒvƒŠƒ“ƒO‚µ‚È‚¢
+        // å¢ƒç•Œã®å¤–å´ã¯ã‚µãƒ³ãƒ—ãƒªãƒ³ã‚°ã—ãªã„
         if( IsSameArea(edge0, edge1)){
             comp += tex2D( Samp, Tex+SampStep2[i]*BlurPower*BLUR_RATE ).x;
             weight += 1.0f;
         }
     }
-    comp /= weight;  // •½‹Ï‰»
+    comp /= weight;  // å¹³å‡åŒ–
 
     return float4(comp, Color0.y, 0, 1);
 }
@@ -520,7 +520,7 @@ float4 PS_BlurShadow2( float2 Tex: TEXCOORD0, uniform sampler2D Samp ) : COLOR
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ƒeƒXƒg•\¦
+// ãƒ†ã‚¹ãƒˆè¡¨ç¤º
 
 //#define TestView
 
@@ -536,7 +536,7 @@ float4 PS_TestView( float2 Tex: TEXCOORD0 ) : COLOR
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-// ƒeƒNƒjƒbƒN
+// ãƒ†ã‚¯ãƒ‹ãƒƒã‚¯
 
 technique MainTech < string MMDPass = "object";
     string Script = 
@@ -686,8 +686,8 @@ technique MainTech < string MMDPass = "object";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ’n–Ê‰e‚Í•`‰æ‚µ‚È‚¢
+// åœ°é¢å½±ã¯æç”»ã—ãªã„
 technique ShadowTec < string MMDPass = "shadow"; > { }
-// Zƒvƒƒbƒg‚Í•`‰æ‚µ‚È‚¢
+// Zãƒ—ãƒ­ãƒƒãƒˆã¯æç”»ã—ãªã„
 technique ZplotTec < string MMDPass = "zplot"; > { }
 
