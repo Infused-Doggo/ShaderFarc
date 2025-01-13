@@ -119,8 +119,8 @@ float Script : STANDARDSGLOBAL <
 > = 0.8;
 
 // シャドウマップバッファサイズ
-#define SMAPSIZE_WIDTH   ShadowMapSize
-#define SMAPSIZE_HEIGHT  ShadowMapSize
+#define SMAPSIZE_WIDTH   ShadowMapSize * 5.0
+#define SMAPSIZE_HEIGHT  ShadowMapSize * 5.0
 
 #define TEX_FORMAT_SMAP  "D3DFMT_R32F"
 #define TEX_MIPLEVELS  1
